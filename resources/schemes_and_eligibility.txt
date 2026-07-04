@@ -1,0 +1,11 @@
+﻿[Government Schemes]
+1. PM-KISAN - Eligibility: Small and marginal landholding farmer families.
+2. PM Awas Yojana (PMAY) - Eligibility: Economically Weaker Sections (EWS) / LIG.
+3. MGNREGA - Eligibility: Every adult member of a rural household willing to do unskilled manual work.
+4. PM Ujjwala Yojana - Eligibility: Adult woman belonging to poor households without LPG connection.
+5. Ayushman Bharat (PM-JAY) - Eligibility: Identified poor and vulnerable families under SECC data.
+6. Janani Suraksha Yojana - Eligibility: Poor pregnant women with special focus on low-performing states.
+7. PM Garib Kalyan Anna Yojana - Eligibility: Ration card holders and priority households.
+8. Deendayal Antyodaya Yojana (DAY-NRLM) - Eligibility: Rural poor women households.
+9. PM Shram Yogi Maan-dhan - Eligibility: Unorganized workers aged 18-40 with income below 15,000 INR/month.
+10. Sukanya Samriddhi Yojana - Eligibility: Parent/guardian of a girl child below 10 years of age.

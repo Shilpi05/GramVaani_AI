@@ -1,0 +1,7 @@
+﻿[Departments List]
+- Roads and Transport (Potholes, broken paths, speed breakers)
+- Water Resources and Supply (Pipeline leaks, contaminated water, low pressure)
+- Electricity and Power (Power cuts, loose hanging wires, broken streetlights)
+- Sanitation and Waste Management (Garbage piles, blocked drains, public toilet maintenance)
+- Public Health (Primary health center issues, medical supply scarcity)
+- Rural Development (MGNREGA wage delays, infrastructure needs)
