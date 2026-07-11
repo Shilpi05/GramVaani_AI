@@ -1,0 +1,4 @@
+streamlit>=1.36.0
+
+# Speech-to-Text (ai/speech module)
+openai-whisper>=20231117
