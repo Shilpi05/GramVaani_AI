@@ -1,0 +1,6 @@
+﻿# Environment variables (contains your secret keys)
+.env
+
+# Python caching folders
+**/__pycache__/
+*.pyc

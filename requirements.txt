@@ -2,3 +2,8 @@ streamlit>=1.36.0
 
 # Speech-to-Text (ai/speech module)
 openai-whisper>=20231117
+
+# Complaint Generation (ai/llm module)
+google-generativeai>=0.7.0
+python-dotenv>=1.0.0
+

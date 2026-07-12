@@ -109,6 +109,42 @@ AUDIO_TRANSCRIPTION_FAILED_ERROR: str = (
 )
 AUDIO_NO_SPEECH_DETECTED_WARNING: str = "No speech was detected in this audio file."
 
+# --- Language selection for Speech-to-Text ---
+COMPLAINT_LANGUAGE_LABEL: str = "Complaint Language"
+LANGUAGE_OPTION_HINDI: str = "Hindi"
+LANGUAGE_OPTION_ENGLISH: str = "English"
+LANGUAGE_OPTION_AUTO: str = "Auto Detect"
+
+# Maps the radio button label -> Whisper language code (None = auto-detect)
+LANGUAGE_CODE_MAP: dict = {
+    LANGUAGE_OPTION_HINDI: "hi",
+    LANGUAGE_OPTION_ENGLISH: "en",
+    LANGUAGE_OPTION_AUTO: None,
+}
+LANGUAGE_OPTIONS: List[str] = [
+    LANGUAGE_OPTION_HINDI,
+    LANGUAGE_OPTION_ENGLISH,
+    LANGUAGE_OPTION_AUTO,
+]
+
+# --- Complaint Generation feature copy (ai/llm integration) ---
+GENERATE_COMPLAINT_BUTTON_LABEL: str = "🧾 Generate Complaint"
+COMPLAINT_GENERATION_PROCESSING_MESSAGE: str = "Generating your complaint... please wait."
+
+COMPLAINT_RESULT_CARD_TITLE: str = "📋 Generated Complaint"
+COMPLAINT_TYPE_LABEL: str = "Complaint Type"
+COMPLAINT_DEPARTMENT_LABEL: str = "Department"
+COMPLAINT_PRIORITY_LABEL: str = "Priority"
+COMPLAINT_SUMMARY_LABEL: str = "Summary"
+COMPLAINT_FORMAL_TEXT_LABEL: str = "Formal Complaint"
+
+COMPLAINT_EMPTY_TRANSCRIPT_WARNING: str = (
+    "There is no recognized speech yet. Please process an audio file first."
+)
+COMPLAINT_GENERATION_FAILED_ERROR: str = (
+    "Complaint generation failed. Please try again in a moment."
+)
+
 
 # ----------------------------------------------------------------------
 # Scheme Finder page copy
