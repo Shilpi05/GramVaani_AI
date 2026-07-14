@@ -3,7 +3,7 @@ file_complaint.py
 ------------------
 Complaint filing page for GramVaani AI.
 
-This page implements two AI features end-to-end:
+This page implements four AI/utility features end-to-end:
 
     Speech-to-Text (ai/speech):
         1. Citizen uploads an audio file (wav / mp3 / m4a)
@@ -16,28 +16,48 @@ This page implements two AI features end-to-end:
     Complaint Generation (ai/llm):
         7. Citizen clicks "Generate Complaint" (shown once a
            transcript exists)
-        8. The transcript is sent to Gemini
+        8. The transcript is sent to Groq
            (ai/llm/complaint_generator.py)
         9. The structured complaint (type, department, priority,
            summary, formal complaint) is displayed on screen
 
+    Complaint ID Generation (ai/utils):
+        10. Immediately after a complaint is generated, a unique
+            Complaint ID in the format GV-YYYYMMDD-NNNNN is created
+            (ai/utils/complaint_id.py) - entirely offline, no
+            external calls - and attached to the complaint dict as
+            "complaint_id"
+        11. The Complaint ID is shown at the top of the generated
+            complaint card
+
+    Government Scheme Recommendation (ai/schemes):
+        12. The complaint's type/department/summary are matched
+            against a local, offline knowledge base
+            (ai/schemes/scheme_recommender.py) - no external API
+            calls involved
+        13. 3-5 relevant government schemes (or a "no direct scheme
+            found" message) are displayed in a card below the
+            generated complaint
+
 FUTURE INTEGRATION NOTE:
     - An image uploader -> sent to `ai/vision` for image classification
     - A submit action -> sent to `backend/services` to persist the complaint
-    - Translation, scheme matching, department routing automation, etc.
-      are OUT OF SCOPE for this page today and are intentionally not
-      wired in.
+    - Translation, department routing automation, etc. are OUT OF
+      SCOPE for this page today and are intentionally not wired in.
 """
 
 import html
+import traceback
 from pathlib import Path
 from typing import Optional
-import traceback
+
 import streamlit as st
 
-from ai.llm.complaint_generator import ComplaintGenerationError, generate_complaint
+from ai.llm.complaint_generator import generate_complaint
+from ai.schemes.scheme_recommender import recommend_schemes
 from ai.speech.speech_service import transcribe_audio
 from ai.speech.speech_utils import delete_temp_file, save_uploaded_audio
+from ai.utils.complaint_id import generate_complaint_id
 from frontend.components.theme import page_header, placeholder_card
 from frontend.config.constants import (
     AUDIO_EMPTY_FILE_WARNING,
@@ -53,6 +73,7 @@ from frontend.config.constants import (
     COMPLAINT_EMPTY_TRANSCRIPT_WARNING,
     COMPLAINT_FORMAL_TEXT_LABEL,
     COMPLAINT_GENERATION_PROCESSING_MESSAGE,
+    COMPLAINT_ID_LABEL,
     COMPLAINT_LANGUAGE_LABEL,
     COMPLAINT_PRIORITY_LABEL,
     COMPLAINT_RESULT_CARD_TITLE,
@@ -70,6 +91,12 @@ from frontend.config.constants import (
     LANGUAGE_CODE_MAP,
     LANGUAGE_OPTIONS,
     PROCESS_AUDIO_BUTTON_LABEL,
+    SCHEME_DEPARTMENT_LABEL,
+    SCHEME_DESCRIPTION_LABEL,
+    SCHEME_ELIGIBILITY_LABEL,
+    SCHEME_NAME_LABEL,
+    SCHEME_NO_MATCH_MESSAGE,
+    SCHEME_RECOMMENDATION_CARD_TITLE,
     TRANSCRIPT_CARD_TITLE,
 )
 
@@ -77,6 +104,7 @@ from frontend.config.constants import (
 # stay visible after their respective button clicks complete.
 _TRANSCRIPT_STATE_KEY: str = "gv_recognized_speech"
 _COMPLAINT_STATE_KEY: str = "gv_generated_complaint"
+_SCHEMES_STATE_KEY: str = "gv_recommended_schemes"
 
 
 def _handle_process_audio(uploaded_file, language_code: Optional[str]) -> None:
@@ -139,13 +167,16 @@ def _handle_process_audio(uploaded_file, language_code: Optional[str]) -> None:
     # invalidates any previously generated complaint.
     st.session_state[_TRANSCRIPT_STATE_KEY] = transcript
     st.session_state.pop(_COMPLAINT_STATE_KEY, None)
+    st.session_state.pop(_SCHEMES_STATE_KEY, None)
 
 
 def _handle_generate_complaint(transcript: Optional[str]) -> None:
     """
-    Runs the Complaint Generation flow: sends the transcript to
-    Gemini via `ai/llm/complaint_generator.py` and stores the
-    structured result for display.
+    Runs the Complaint Generation flow: sends the transcript to Groq
+    via `ai/llm/complaint_generator.py`, attaches a freshly generated
+    Complaint ID (`ai/utils/complaint_id.py`), stores the structured
+    result for display, then looks up matching government schemes
+    via `ai/schemes/scheme_recommender.py` and stores those too.
 
     Args:
         transcript: The recognized speech to generate a complaint
@@ -164,11 +195,42 @@ def _handle_generate_complaint(transcript: Optional[str]) -> None:
             st.warning(COMPLAINT_EMPTY_TRANSCRIPT_WARNING)
             return
         except Exception as exc:
-            print(traceback.format_exc())   # full traceback in terminal
-            st.exception(exc)               # full exception in the UI
+            # DEBUG MODE: surface the full exception instead of a
+            # generic message, so the real cause (auth error, rate
+            # limit, network timeout, etc.) is visible during
+            # development. Also print the full traceback to the
+            # terminal for easier debugging.
+            print(traceback.format_exc())
+            st.exception(exc)
             return
 
+    # --- Complaint ID Generation (ai/utils) ---
+    # Runs entirely offline (date + random digits, no external calls).
+    # Attached to the complaint dict returned by generate_complaint()
+    # here, at the integration layer - the complaint generation logic
+    # in ai/llm/complaint_generator.py itself is untouched.
+    complaint["complaint_id"] = generate_complaint_id()
+
     st.session_state[_COMPLAINT_STATE_KEY] = complaint
+
+    # --- Government Scheme Recommendation (ai/schemes) ---
+    # Runs entirely offline against a local knowledge base, using the
+    # freshly generated complaint's type/department/summary. Never
+    # raises - a lookup failure should never block the complaint the
+    # citizen just generated from being shown, so any unexpected
+    # error here is logged and treated as "no schemes found" rather
+    # than surfaced to the citizen.
+    try:
+        schemes = recommend_schemes(
+            complaint_type=complaint.get("complaint_type", ""),
+            department=complaint.get("department", ""),
+            summary=complaint.get("summary", ""),
+        )
+    except Exception as exc:  # noqa: BLE001
+        print(traceback.format_exc())
+        schemes = SCHEME_NO_MATCH_MESSAGE
+
+    st.session_state[_SCHEMES_STATE_KEY] = schemes
 
 
 def _render_transcript_if_available() -> None:
@@ -207,6 +269,7 @@ def _render_complaint_result_if_available() -> None:
 
     # Escape every field before rendering as HTML - the values come
     # from an LLM response and should never be trusted as safe markup.
+    complaint_id = html.escape(str(complaint.get("complaint_id", "")))
     complaint_type = html.escape(str(complaint.get("complaint_type", "")))
     department = html.escape(str(complaint.get("department", "")))
     priority = html.escape(str(complaint.get("priority", "")))
@@ -218,11 +281,75 @@ def _render_complaint_result_if_available() -> None:
         f"""
         <div class="gv-card">
             <h3>{COMPLAINT_RESULT_CARD_TITLE}</h3>
+            <p><strong>{COMPLAINT_ID_LABEL}:</strong> {complaint_id}</p>
             <p><strong>{COMPLAINT_TYPE_LABEL}:</strong> {complaint_type}</p>
             <p><strong>{COMPLAINT_DEPARTMENT_LABEL}:</strong> {department}</p>
             <p><strong>{COMPLAINT_PRIORITY_LABEL}:</strong> {priority}</p>
             <p><strong>{COMPLAINT_SUMMARY_LABEL}:</strong> {summary}</p>
             <p><strong>{COMPLAINT_FORMAL_TEXT_LABEL}:</strong><br>{formal_complaint}</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def _render_scheme_recommendations_if_available() -> None:
+    """
+    Renders the recommended government schemes in a styled card, if
+    any are available. Shown once a complaint has been generated.
+
+    Each scheme is rendered as:
+        ----------------------------------
+        Scheme Name
+        Description
+        Eligibility
+        Responsible Department
+        ----------------------------------
+
+    If no matching schemes were found, a single explanatory line is
+    shown instead of the scheme list.
+    """
+    schemes = st.session_state.get(_SCHEMES_STATE_KEY)
+    if not schemes:
+        return
+
+    separator = "-" * 34
+
+    if isinstance(schemes, str):
+        # No matching category - schemes holds the fallback message.
+        body_html = f"<p>{html.escape(schemes)}</p>"
+    else:
+        entries = []
+        for scheme in schemes:
+            name = html.escape(str(scheme.get("name", "")))
+            description = html.escape(str(scheme.get("description", "")))
+            eligibility = html.escape(str(scheme.get("eligibility", "")))
+            official_department = html.escape(
+                str(scheme.get("official_department", ""))
+            )
+            # NOTE: deliberately built from <p> tags (same as the
+            # complaint result card above) rather than a <pre> block.
+            # Streamlit applies its own low-contrast code-block
+            # styling to <pre>/<code> elements that this app's
+            # `.gv-card p` color rule does not override, which made
+            # earlier scheme text render almost invisibly on the
+            # white card background.
+            entries.append(
+                f"""<p>{separator}<br>
+                <strong>{SCHEME_NAME_LABEL}:</strong> {name}<br>
+                <strong>{SCHEME_DESCRIPTION_LABEL}:</strong> {description}<br>
+                <strong>{SCHEME_ELIGIBILITY_LABEL}:</strong> {eligibility}<br>
+                <strong>{SCHEME_DEPARTMENT_LABEL}:</strong> {official_department}<br>
+                {separator}</p>"""
+            )
+        body_html = "".join(entries)
+
+    st.write("")
+    st.markdown(
+        f"""
+        <div class="gv-card">
+            <h3>{SCHEME_RECOMMENDATION_CARD_TITLE}</h3>
+            {body_html}
         </div>
         """,
         unsafe_allow_html=True,
@@ -287,6 +414,9 @@ def render() -> None:
 
     # --- Display the generated structured complaint, if any ---
     _render_complaint_result_if_available()
+
+    # --- Display recommended government schemes, if any ---
+    _render_scheme_recommendations_if_available()
 
     st.write("")
     st.divider()

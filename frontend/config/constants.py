@@ -132,6 +132,7 @@ GENERATE_COMPLAINT_BUTTON_LABEL: str = "🧾 Generate Complaint"
 COMPLAINT_GENERATION_PROCESSING_MESSAGE: str = "Generating your complaint... please wait."
 
 COMPLAINT_RESULT_CARD_TITLE: str = "📋 Generated Complaint"
+COMPLAINT_ID_LABEL: str = "Complaint ID"
 COMPLAINT_TYPE_LABEL: str = "Complaint Type"
 COMPLAINT_DEPARTMENT_LABEL: str = "Department"
 COMPLAINT_PRIORITY_LABEL: str = "Priority"
@@ -144,6 +145,14 @@ COMPLAINT_EMPTY_TRANSCRIPT_WARNING: str = (
 COMPLAINT_GENERATION_FAILED_ERROR: str = (
     "Complaint generation failed. Please try again in a moment."
 )
+
+# --- Government Scheme Recommendation feature copy (ai/schemes integration) ---
+SCHEME_RECOMMENDATION_CARD_TITLE: str = "🏛 Recommended Government Schemes"
+SCHEME_NAME_LABEL: str = "Scheme Name"
+SCHEME_DESCRIPTION_LABEL: str = "Description"
+SCHEME_ELIGIBILITY_LABEL: str = "Eligibility"
+SCHEME_DEPARTMENT_LABEL: str = "Responsible Department"
+SCHEME_NO_MATCH_MESSAGE: str = "No direct government scheme found."
 
 
 # ----------------------------------------------------------------------

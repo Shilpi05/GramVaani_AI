@@ -38,7 +38,13 @@ load_dotenv()
 #     WHISPER_MODEL=small
 #
 # Other valid values: "tiny", "base", "small", "medium", "large".
-WHISPER_MODEL_SIZE: str = os.getenv("WHISPER_MODEL", "small")
+#
+# NOTE: os.getenv(name, default) only falls back to `default` when
+# the variable is completely UNSET. If it's present in .env but
+# blank (e.g. "WHISPER_MODEL="), it returns "" instead - which would
+# make whisper.load_model("") fail. Guard against that explicitly.
+_raw_model_size = os.getenv("WHISPER_MODEL", "").strip()
+WHISPER_MODEL_SIZE: str = _raw_model_size if _raw_model_size else "small"
 
 
 @lru_cache(maxsize=1)

@@ -4,6 +4,8 @@ streamlit>=1.36.0
 openai-whisper>=20231117
 
 # Complaint Generation (ai/llm module)
-google-generativeai>=0.7.0
+# Uses Groq's official Python SDK for LLM inference.
+# Google Gemini (google-generativeai / google-genai) has been fully
+# removed from this project.
+groq>=0.11.0
 python-dotenv>=1.0.0
-
