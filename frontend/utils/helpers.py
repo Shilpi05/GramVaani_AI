@@ -1,13 +1,28 @@
 """
 helpers.py
 -----------
-Placeholder for shared, stateless helper functions used across
-multiple pages/components (e.g. formatting, validation utilities).
+Shared, stateless helper functions used across multiple pages.
 
-No helpers are needed yet - this file exists so that future
-utility functions have an established home instead of being
-scattered or duplicated across page files.
+Kept intentionally small: only promote a function here once it's
+genuinely needed in more than one page, to avoid speculative
+abstractions. `navigate_to()` was the first such case - originally
+defined privately inside `frontend/pages/home.py`, then needed again
+by `frontend/pages/scheme_finder.py`'s empty-state "File a Complaint"
+button, so it now lives here instead of being duplicated per page.
 """
 
-# No implementation yet. Add small, pure, reusable functions here
-# as the UI grows (e.g. `format_status_label()`, `truncate_text()`).
+import streamlit as st
+
+
+def navigate_to(page_key: str) -> None:
+    """
+    Switches the active page using the same `st.session_state`
+    mechanism `frontend/components/sidebar.py` already uses - this is
+    frontend page routing, not backend logic.
+
+    Args:
+        page_key: A key from `NAV_ITEMS` in `frontend/config/constants.py`
+            (e.g. "file_complaint", "track_complaint").
+    """
+    st.session_state["current_page"] = page_key
+    st.rerun()

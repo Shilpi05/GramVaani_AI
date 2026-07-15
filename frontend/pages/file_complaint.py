@@ -34,10 +34,12 @@ This page implements six AI/utility features end-to-end:
         12. The complaint's type/department/summary are matched
             against a local, offline knowledge base
             (ai/schemes/scheme_recommender.py) - no external API
-            calls involved
-        13. 3-5 relevant government schemes (or a "no direct scheme
-            found" message) are displayed in a card below the
-            generated complaint
+            calls involved, and stored in session state
+        13. The matched schemes (or "no direct scheme found") are
+            displayed on the dedicated "Scheme Finder" page
+            (frontend/pages/scheme_finder.py), not here - this page
+            is only responsible for computing them, since that's
+            where the complaint data they're derived from exists
 
     PDF Export (ai/utils/pdf_generator.py):
         14. A "Download Complaint" button renders a professionally
@@ -54,7 +56,6 @@ This page implements six AI/utility features end-to-end:
 
 FUTURE INTEGRATION NOTE:
     - An image uploader -> sent to `ai/vision` for image classification
-    - A submit action -> sent to `backend/services` to persist the complaint
     - Translation, department routing automation, etc. are OUT OF
       SCOPE for this page today and are intentionally not wired in.
 """
@@ -75,7 +76,7 @@ from ai.utils.complaint_id import generate_complaint_id
 from ai.utils.complaint_tracker import SESSION_STATE_REGISTRY_KEY as TRACKER_REGISTRY_KEY
 from ai.utils.complaint_tracker import register_complaint
 from ai.utils.pdf_generator import generate_complaint_pdf
-from frontend.components.theme import page_header, placeholder_card
+from frontend.components.theme import page_header
 from frontend.config.constants import (
     AUDIO_EMPTY_FILE_WARNING,
     AUDIO_NO_FILE_WARNING,
@@ -100,7 +101,6 @@ from frontend.config.constants import (
     FILE_COMPLAINT_EYEBROW,
     FILE_COMPLAINT_IMAGE_CARD_TEXT,
     FILE_COMPLAINT_IMAGE_CARD_TITLE,
-    FILE_COMPLAINT_PLACEHOLDER,
     FILE_COMPLAINT_SUBTITLE,
     FILE_COMPLAINT_TITLE,
     FILE_COMPLAINT_VOICE_CARD_TEXT,
@@ -110,12 +110,7 @@ from frontend.config.constants import (
     LANGUAGE_OPTIONS,
     PDF_GENERATION_FAILED_ERROR,
     PROCESS_AUDIO_BUTTON_LABEL,
-    SCHEME_DEPARTMENT_LABEL,
-    SCHEME_DESCRIPTION_LABEL,
-    SCHEME_ELIGIBILITY_LABEL,
-    SCHEME_NAME_LABEL,
     SCHEME_NO_MATCH_MESSAGE,
-    SCHEME_RECOMMENDATION_CARD_TITLE,
     TRANSCRIPT_CARD_TITLE,
 )
 
@@ -123,7 +118,12 @@ from frontend.config.constants import (
 # stay visible after their respective button clicks complete.
 _TRANSCRIPT_STATE_KEY: str = "gv_recognized_speech"
 _COMPLAINT_STATE_KEY: str = "gv_generated_complaint"
-_SCHEMES_STATE_KEY: str = "gv_recommended_schemes"
+
+# Public (no leading underscore) because `frontend/pages/scheme_finder.py`
+# reads this key to display the schemes computed here - same pattern
+# as `ai/utils/complaint_tracker.SESSION_STATE_REGISTRY_KEY`, which
+# other pages already import rather than redefining the key locally.
+SCHEMES_STATE_KEY: str = "gv_recommended_schemes"
 
 
 def _handle_process_audio(uploaded_file, language_code: Optional[str]) -> None:
@@ -186,7 +186,7 @@ def _handle_process_audio(uploaded_file, language_code: Optional[str]) -> None:
     # invalidates any previously generated complaint.
     st.session_state[_TRANSCRIPT_STATE_KEY] = transcript
     st.session_state.pop(_COMPLAINT_STATE_KEY, None)
-    st.session_state.pop(_SCHEMES_STATE_KEY, None)
+    st.session_state.pop(SCHEMES_STATE_KEY, None)
 
 
 def _handle_generate_complaint(transcript: Optional[str]) -> None:
@@ -260,11 +260,11 @@ def _handle_generate_complaint(transcript: Optional[str]) -> None:
             department=complaint.get("department", ""),
             summary=complaint.get("summary", ""),
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception:  # noqa: BLE001
         print(traceback.format_exc())
         schemes = SCHEME_NO_MATCH_MESSAGE
 
-    st.session_state[_SCHEMES_STATE_KEY] = schemes
+    st.session_state[SCHEMES_STATE_KEY] = schemes
 
 
 def _render_transcript_if_available() -> None:
@@ -327,69 +327,6 @@ def _render_complaint_result_if_available() -> None:
     )
 
 
-def _render_scheme_recommendations_if_available() -> None:
-    """
-    Renders the recommended government schemes in a styled card, if
-    any are available. Shown once a complaint has been generated.
-
-    Each scheme is rendered as:
-        ----------------------------------
-        Scheme Name
-        Description
-        Eligibility
-        Responsible Department
-        ----------------------------------
-
-    If no matching schemes were found, a single explanatory line is
-    shown instead of the scheme list.
-    """
-    schemes = st.session_state.get(_SCHEMES_STATE_KEY)
-    if not schemes:
-        return
-
-    separator = "-" * 34
-
-    if isinstance(schemes, str):
-        # No matching category - schemes holds the fallback message.
-        body_html = f"<p>{html.escape(schemes)}</p>"
-    else:
-        entries = []
-        for scheme in schemes:
-            name = html.escape(str(scheme.get("name", "")))
-            description = html.escape(str(scheme.get("description", "")))
-            eligibility = html.escape(str(scheme.get("eligibility", "")))
-            official_department = html.escape(
-                str(scheme.get("official_department", ""))
-            )
-            # NOTE: deliberately built from <p> tags (same as the
-            # complaint result card above) rather than a <pre> block.
-            # Streamlit applies its own low-contrast code-block
-            # styling to <pre>/<code> elements that this app's
-            # `.gv-card p` color rule does not override, which made
-            # earlier scheme text render almost invisibly on the
-            # white card background.
-            entries.append(
-                f"""<p>{separator}<br>
-                <strong>{SCHEME_NAME_LABEL}:</strong> {name}<br>
-                <strong>{SCHEME_DESCRIPTION_LABEL}:</strong> {description}<br>
-                <strong>{SCHEME_ELIGIBILITY_LABEL}:</strong> {eligibility}<br>
-                <strong>{SCHEME_DEPARTMENT_LABEL}:</strong> {official_department}<br>
-                {separator}</p>"""
-            )
-        body_html = "".join(entries)
-
-    st.write("")
-    st.markdown(
-        f"""
-        <div class="gv-card">
-            <h3>{SCHEME_RECOMMENDATION_CARD_TITLE}</h3>
-            {body_html}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
 def _render_download_button_if_available() -> None:
     """
     Renders a "Download Complaint" button that generates a
@@ -407,7 +344,7 @@ def _render_download_button_if_available() -> None:
     if not complaint:
         return
 
-    schemes = st.session_state.get(_SCHEMES_STATE_KEY)
+    schemes = st.session_state.get(SCHEMES_STATE_KEY)
 
     try:
         pdf_bytes = generate_complaint_pdf(complaint, schemes)
@@ -489,12 +426,5 @@ def render() -> None:
     # --- Display the generated structured complaint, if any ---
     _render_complaint_result_if_available()
 
-    # --- Display recommended government schemes, if any ---
-    _render_scheme_recommendations_if_available()
-
     # --- Offer a PDF download of the complaint + schemes, if any ---
     _render_download_button_if_available()
-
-    st.write("")
-    st.divider()
-    placeholder_card(icon="📝", text=FILE_COMPLAINT_PLACEHOLDER)

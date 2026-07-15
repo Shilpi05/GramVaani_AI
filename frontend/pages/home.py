@@ -48,6 +48,7 @@ from frontend.components.theme import (
     COLOR_TEXT_ON_NAVY_MUTED,
     COLOR_TEXT_ON_TEAL,
     COLOR_WHITE,
+    RADIUS_LG,
 )
 from frontend.config.constants import (
     HOME_CTA_BANNER_BUTTON_LABEL,
@@ -79,9 +80,21 @@ from frontend.config.constants import (
     HOME_WORKFLOW_SUBTITLE,
     HOME_WORKFLOW_TITLE,
 )
+from frontend.utils.helpers import navigate_to
 
 # ----------------------------------------------------------------------
 # Scoped CSS for this page only (class prefix: gv-home-).
+#
+# NOTE on .gv-home-hero-title's `!important`: Streamlit applies its
+# own default color to every <h1> (sourced from .streamlit/config.toml's
+# textColor = navy), which has higher CSS specificity than a
+# page-scoped class alone. That default is invisible everywhere else
+# in the app because the only other <h1> (page titles, via
+# theme.py's page_header()) is ALSO meant to be navy and sits on a
+# light background - so the override was silently winning without
+# ever looking wrong, until this one h1, which needs to be white on
+# the dark hero background. Same underlying issue, same fix already
+# used in theme.py (see the sidebar button color rule).
 # ----------------------------------------------------------------------
 _HOME_STYLE = (
     "<style>"
@@ -96,7 +109,7 @@ _HOME_STYLE = (
     "padding:0.35rem 0.9rem;border-radius:999px;margin-bottom:1rem;"
     "}"
     ".gv-home-hero-title{"
-    f"color:{COLOR_WHITE};font-size:2.6rem;font-weight:800;line-height:1.15;"
+    f"color:{COLOR_WHITE} !important;font-size:2.6rem;font-weight:800;line-height:1.15;"
     "margin:0 0 0.9rem 0;letter-spacing:-0.5px;"
     "}"
     ".gv-home-hero-subtitle{"
@@ -127,7 +140,7 @@ _HOME_STYLE = (
     "@media (max-width:1100px){.gv-home-grid-3,.gv-home-grid-4{grid-template-columns:repeat(2,1fr);}}"
     "@media (max-width:680px){.gv-home-grid-2,.gv-home-grid-3,.gv-home-grid-4{grid-template-columns:1fr;}}"
     ".gv-home-card{"
-    f"background-color:{COLOR_WHITE};border:1px solid {COLOR_BORDER};border-radius:16px;"
+    f"background-color:{COLOR_WHITE};border:1px solid {COLOR_BORDER};border-radius:{RADIUS_LG};"
     "padding:1.5rem;box-shadow:0 1px 3px rgba(11,31,58,0.06);transition:box-shadow 0.15s ease,transform 0.15s ease;"
     "}"
     ".gv-home-card:hover{box-shadow:0 8px 20px rgba(11,31,58,0.12);transform:translateY(-2px);}"
@@ -142,7 +155,7 @@ _HOME_STYLE = (
     f"color:{COLOR_TEXT_MUTED};font-size:0.9rem;line-height:1.5;margin:0;"
     "}"
     ".gv-home-stat-card{"
-    f"background-color:{COLOR_WHITE};border:1px solid {COLOR_BORDER};border-radius:16px;"
+    f"background-color:{COLOR_WHITE};border:1px solid {COLOR_BORDER};border-radius:{RADIUS_LG};"
     "padding:1.4rem 1.2rem;box-shadow:0 1px 3px rgba(11,31,58,0.06);"
     "display:flex;align-items:center;gap:0.9rem;"
     "}"
@@ -157,7 +170,7 @@ _HOME_STYLE = (
     f"color:{COLOR_TEXT_MUTED};font-size:0.8rem;font-weight:600;margin-top:0.15rem;"
     "}"
     ".gv-home-workflow-step{"
-    f"background-color:{COLOR_WHITE};border:1px solid {COLOR_BORDER};border-radius:16px;"
+    f"background-color:{COLOR_WHITE};border:1px solid {COLOR_BORDER};border-radius:{RADIUS_LG};"
     "padding:1.4rem 1.1rem;text-align:center;position:relative;"
     "}"
     ".gv-home-workflow-icon{"
@@ -176,7 +189,7 @@ _HOME_STYLE = (
     f"color:{COLOR_TEXT_MUTED};font-size:0.85rem;line-height:1.45;margin:0;"
     "}"
     ".gv-home-how-step{"
-    f"background-color:{COLOR_WHITE};border:1px solid {COLOR_BORDER};border-radius:16px;"
+    f"background-color:{COLOR_WHITE};border:1px solid {COLOR_BORDER};border-radius:{RADIUS_LG};"
     "padding:1.6rem 1.4rem;"
     "}"
     ".gv-home-how-step-number{"
@@ -228,21 +241,6 @@ def _get_session_stats() -> dict:
     return {"filed": filed, "in_progress": in_progress, "resolved": resolved}
 
 
-def _navigate_to(page_key: str) -> None:
-    """
-    Switches the active page using the same `st.session_state`
-    mechanism `frontend/components/sidebar.py` already uses - this is
-    frontend page routing, not backend logic, and touches no other
-    file.
-
-    Args:
-        page_key: A key from `NAV_ITEMS` in `frontend/config/constants.py`
-            (e.g. "file_complaint", "track_complaint").
-    """
-    st.session_state["current_page"] = page_key
-    st.rerun()
-
-
 def _render_hero() -> None:
     """Renders the hero section: headline, subheadline, trust badges."""
     trust_pills = "".join(
@@ -268,14 +266,14 @@ def _render_hero() -> None:
             type="primary",
             key="gv_home_hero_primary_cta",
         ):
-            _navigate_to(HOME_HERO_PRIMARY_CTA_TARGET_PAGE)
+            navigate_to(HOME_HERO_PRIMARY_CTA_TARGET_PAGE)
     with cta_col2:
         if st.button(
             HOME_HERO_SECONDARY_CTA_LABEL,
             use_container_width=True,
             key="gv_home_hero_secondary_cta",
         ):
-            _navigate_to(HOME_HERO_SECONDARY_CTA_TARGET_PAGE)
+            navigate_to(HOME_HERO_SECONDARY_CTA_TARGET_PAGE)
 
 
 def _render_section_header(eyebrow: str, title: str, subtitle: str) -> None:
@@ -399,7 +397,7 @@ def _render_cta_banner() -> None:
             type="primary",
             key="gv_home_cta_banner_button",
         ):
-            _navigate_to(HOME_CTA_BANNER_TARGET_PAGE)
+            navigate_to(HOME_CTA_BANNER_TARGET_PAGE)
 
 
 def render() -> None:

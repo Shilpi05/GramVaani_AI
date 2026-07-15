@@ -24,8 +24,8 @@ from typing import List, TypedDict
 APP_NAME: str = "GramVaani AI"
 APP_TAGLINE: str = "One Voice. One Platform. Better Governance."
 APP_ICON: str = "🗣️"
-APP_VERSION: str = "v0.1"
-APP_STAGE_LABEL: str = "UI Skeleton"
+APP_VERSION: str = "v1.0"
+APP_STAGE_LABEL: str = "AI-Powered"
 
 SIDEBAR_BRAND_ICON: str = "🗣️"
 SIDEBAR_TAGLINE: str = "Voice of the Citizen"
@@ -322,14 +322,21 @@ PDF_GENERATION_FAILED_ERROR: str = (
 # ----------------------------------------------------------------------
 SCHEME_FINDER_EYEBROW: str = "Scheme Discovery"
 SCHEME_FINDER_TITLE: str = "Scheme Finder"
-SCHEME_FINDER_SUBTITLE: str = "This module will recommend government schemes."
-SCHEME_FINDER_CARD_TITLE: str = "🔎 How it will work"
-SCHEME_FINDER_CARD_TEXT: str = (
-    "Citizens will answer a few simple questions about themselves, "
-    "and GramVaani AI will surface the government schemes they are "
-    "most likely eligible for - in their own language."
+SCHEME_FINDER_SUBTITLE: str = (
+    "Government schemes relevant to your complaint, matched automatically."
 )
-SCHEME_FINDER_PLACEHOLDER: str = "Scheme recommendation engine coming soon"
+SCHEME_FINDER_CARD_TITLE: str = "🔎 How it works"
+SCHEME_FINDER_CARD_TEXT: str = (
+    "When you file a complaint, GramVaani AI matches its type, "
+    "department, and summary against a local knowledge base of "
+    "government schemes. Anything relevant appears below - no extra "
+    "steps needed."
+)
+SCHEME_FINDER_EMPTY_STATE_TEXT: str = (
+    "No schemes to show yet - file a complaint first and any relevant "
+    "government schemes will appear here automatically."
+)
+SCHEME_FINDER_EMPTY_STATE_BUTTON_LABEL: str = "📝 File a Complaint"
 
 
 # ----------------------------------------------------------------------
