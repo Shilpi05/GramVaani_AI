@@ -21,10 +21,12 @@ Sections, top to bottom:
 
 All CSS here is scoped under the `gv-home-` class prefix and injected
 locally by this page only, so it cannot affect the appearance of any
-other page. A `prefers-color-scheme: dark` block is included as a
-defensive enhancement (on top of the white-card-on-dark-canvas look
-already used consistently elsewhere in this app) so this page reads
-cleanly regardless of the viewer's OS/browser color scheme.
+other page. Every color used comes from `frontend/components/theme.py`
+- no hex codes are hardcoded in this file. The app's overall theme
+(light/dark base, canvas color) is pinned explicitly in
+`.streamlit/config.toml`, so this page no longer needs its own
+OS-dark-mode override - every visitor sees the same design regardless
+of their system color scheme, consistent with every other page.
 """
 
 import streamlit as st
@@ -39,8 +41,12 @@ from frontend.components.theme import (
     COLOR_NAVY,
     COLOR_NAVY_SOFT,
     COLOR_TEAL,
+    COLOR_TEAL_DARK,
     COLOR_TEAL_SOFT,
     COLOR_TEXT_MUTED,
+    COLOR_TEXT_ON_NAVY,
+    COLOR_TEXT_ON_NAVY_MUTED,
+    COLOR_TEXT_ON_TEAL,
     COLOR_WHITE,
 )
 from frontend.config.constants import (
@@ -85,21 +91,21 @@ _HOME_STYLE = (
     "box-shadow:0 8px 24px rgba(11,31,58,0.18);"
     "}"
     ".gv-home-hero-eyebrow{"
-    "display:inline-block;background:rgba(255,255,255,0.14);color:#EAF6F4;"
+    f"display:inline-block;background:rgba(255,255,255,0.14);color:{COLOR_TEXT_ON_TEAL};"
     "font-size:0.78rem;font-weight:600;letter-spacing:0.4px;text-transform:uppercase;"
     "padding:0.35rem 0.9rem;border-radius:999px;margin-bottom:1rem;"
     "}"
     ".gv-home-hero-title{"
-    "color:#FFFFFF;font-size:2.6rem;font-weight:800;line-height:1.15;"
+    f"color:{COLOR_WHITE};font-size:2.6rem;font-weight:800;line-height:1.15;"
     "margin:0 0 0.9rem 0;letter-spacing:-0.5px;"
     "}"
     ".gv-home-hero-subtitle{"
-    "color:#D7E2EE;font-size:1.08rem;line-height:1.6;max-width:760px;margin:0 0 1.4rem 0;"
+    f"color:{COLOR_TEXT_ON_NAVY_MUTED};font-size:1.08rem;line-height:1.6;max-width:760px;margin:0 0 1.4rem 0;"
     "}"
     ".gv-home-trust-row{display:flex;flex-wrap:wrap;gap:0.6rem;margin-top:0.4rem;}"
     ".gv-home-trust-pill{"
     "display:inline-flex;align-items:center;gap:0.4rem;background:rgba(255,255,255,0.10);"
-    "border:1px solid rgba(255,255,255,0.20);color:#F2F6FA;font-size:0.82rem;font-weight:600;"
+    f"border:1px solid rgba(255,255,255,0.20);color:{COLOR_TEXT_ON_NAVY};font-size:0.82rem;font-weight:600;"
     "padding:0.4rem 0.85rem;border-radius:999px;"
     "}"
     ".gv-home-section{margin:2.6rem 0 1.2rem 0;}"
@@ -174,7 +180,7 @@ _HOME_STYLE = (
     "padding:1.6rem 1.4rem;"
     "}"
     ".gv-home-how-step-number{"
-    f"width:38px;height:38px;border-radius:999px;background-color:{COLOR_TEAL};color:#FFFFFF;"
+    f"width:38px;height:38px;border-radius:999px;background-color:{COLOR_TEAL};color:{COLOR_WHITE};"
     "display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:800;"
     "margin-bottom:0.9rem;"
     "}"
@@ -185,21 +191,12 @@ _HOME_STYLE = (
     f"color:{COLOR_TEXT_MUTED};font-size:0.9rem;line-height:1.5;margin:0;"
     "}"
     ".gv-home-cta-banner{"
-    f"background:linear-gradient(120deg,{COLOR_TEAL} 0%,#0B8377 100%);border-radius:18px;"
+    f"background:linear-gradient(120deg,{COLOR_TEAL} 0%,{COLOR_TEAL_DARK} 100%);border-radius:18px;"
     "padding:2.2rem 2.4rem;margin:2.6rem 0 1rem 0;display:flex;align-items:center;"
     "justify-content:space-between;flex-wrap:wrap;gap:1rem;"
     "}"
-    ".gv-home-cta-banner-title{color:#FFFFFF;font-size:1.35rem;font-weight:800;margin:0 0 0.25rem 0;}"
-    ".gv-home-cta-banner-subtitle{color:#EAF6F4;font-size:0.92rem;margin:0;}"
-    "@media (prefers-color-scheme: dark){"
-    ".gv-home-card,.gv-home-stat-card,.gv-home-workflow-step,.gv-home-how-step{"
-    "background-color:#16202E;border-color:#28374A;"
-    "}"
-    ".gv-home-card-title,.gv-home-stat-value,.gv-home-workflow-title,.gv-home-how-title,"
-    ".gv-home-section-title{color:#F2F6FA;}"
-    ".gv-home-card-text,.gv-home-stat-label,.gv-home-workflow-text,.gv-home-how-text,"
-    ".gv-home-section-subtitle{color:#AAB8C8;}"
-    "}"
+    f'.gv-home-cta-banner-title{{color:{COLOR_WHITE};font-size:1.35rem;font-weight:800;margin:0 0 0.25rem 0;}}'
+    f'.gv-home-cta-banner-subtitle{{color:{COLOR_TEXT_ON_TEAL};font-size:0.92rem;margin:0;}}'
     "</style>"
 )
 

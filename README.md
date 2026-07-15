@@ -20,11 +20,11 @@ rather than navigating complex government forms and portals.
 
 Planned capabilities (not yet implemented):
 
-| Module | What it will do |
-|---|---|
-| File Complaint | Voice + photo based complaint registration |
-| Scheme Finder | Personalized government scheme recommendations |
-| Track Complaint | Real-time complaint status tracking |
+| Module          | What it will do                                |
+| --------------- | ---------------------------------------------- |
+| File Complaint  | Voice + photo based complaint registration     |
+| Scheme Finder   | Personalized government scheme recommendations |
+| Track Complaint | Real-time complaint status tracking            |
 
 ---
 

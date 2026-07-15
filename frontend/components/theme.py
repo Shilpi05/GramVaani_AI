@@ -37,6 +37,15 @@ COLOR_TEXT_MUTED: str = "#5C6B7A"
 COLOR_SIDEBAR_TAGLINE: str = "#B7C2D0"
 COLOR_SIDEBAR_FOOTER: str = "#7C8CA0"
 
+# Text-on-dark tokens - used on the navy/teal gradient surfaces (hero,
+# CTA banner). Named and centralized here instead of being hardcoded
+# per-page, so every dark surface in the app draws from the same
+# palette rather than each page picking its own near-white shade.
+COLOR_TEAL_DARK: str = "#0B8377"
+COLOR_TEXT_ON_NAVY: str = "#F2F6FA"
+COLOR_TEXT_ON_NAVY_MUTED: str = "#D7E2EE"
+COLOR_TEXT_ON_TEAL: str = "#EAF6F4"
+
 # ----------------------------------------------------------------------
 # Typography constants
 # ----------------------------------------------------------------------

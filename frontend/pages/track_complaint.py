@@ -42,6 +42,7 @@ from frontend.components.theme import (
     COLOR_TEAL,
     COLOR_TEAL_SOFT,
     COLOR_TEXT_MUTED,
+    COLOR_WHITE,
     page_header,
 )
 from frontend.config.constants import (
@@ -146,10 +147,10 @@ def _build_status_stepper_html(current_status: str) -> str:
         ".gv-step-marker{width:30px;height:30px;border-radius:999px;display:flex;"
         "align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;"
         "margin-bottom:0.4rem;}"
-        f".gv-step-done .gv-step-marker{{background-color:{COLOR_TEAL};color:#FFFFFF;}}"
-        f".gv-step-current .gv-step-marker{{background-color:{COLOR_TEAL};color:#FFFFFF;"
+        f".gv-step-done .gv-step-marker{{background-color:{COLOR_TEAL};color:{COLOR_WHITE};}}"
+        f".gv-step-current .gv-step-marker{{background-color:{COLOR_TEAL};color:{COLOR_WHITE};"
         f"box-shadow:0 0 0 4px {COLOR_TEAL_SOFT};}}"
-        f".gv-step-upcoming .gv-step-marker{{background-color:#FFFFFF;color:{COLOR_TEXT_MUTED};"
+        f".gv-step-upcoming .gv-step-marker{{background-color:{COLOR_WHITE};color:{COLOR_TEXT_MUTED};"
         f"border:1.5px solid {COLOR_BORDER};}}"
         ".gv-step-label{font-size:0.78rem;text-align:center;font-weight:600;}"
         f".gv-step-done .gv-step-label,.gv-step-current .gv-step-label{{color:{COLOR_NAVY};}}"

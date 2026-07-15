@@ -1,0 +1,21 @@
+# Explicit theme pin for GramVaani AI.
+#
+# Without this file, Streamlit auto-selects light or dark base chrome
+# from the visitor's OS/browser preference. That's what was causing
+# the app to look different depending on who opened it, and forced
+# individual pages (home.py) to carry their own defensive
+# `@media (prefers-color-scheme: dark)` overrides that no other page
+# had - a real source of inconsistency across pages.
+#
+# Pinning the theme here means every visitor sees the same, deliberately
+# designed look, and no page needs to special-case dark mode itself.
+# These values mirror the design tokens in frontend/components/theme.py -
+# if the palette changes, update both places together.
+
+[theme]
+base = "light"
+primaryColor = "#0F9D8C"
+backgroundColor = "#F7F9FB"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#0B1F3A"
+font = "sans serif"
