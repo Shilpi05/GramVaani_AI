@@ -3,7 +3,7 @@ file_complaint.py
 ------------------
 Complaint filing page for GramVaani AI.
 
-This page implements four AI/utility features end-to-end:
+This page implements six AI/utility features end-to-end:
 
     Speech-to-Text (ai/speech):
         1. Citizen uploads an audio file (wav / mp3 / m4a)
@@ -39,6 +39,19 @@ This page implements four AI/utility features end-to-end:
             found" message) are displayed in a card below the
             generated complaint
 
+    PDF Export (ai/utils/pdf_generator.py):
+        14. A "Download Complaint" button renders a professionally
+            formatted PDF (via `reportlab`) containing the Complaint
+            ID, date, type, department, priority, summary, formal
+            complaint, and recommended schemes - built entirely
+            offline, no external calls
+
+    Complaint Tracking Registration (ai/utils/complaint_tracker.py):
+        15. Every generated complaint is registered into a mock,
+            session-only tracking registry (no database, no
+            authentication) so its status can later be looked up by
+            Complaint ID on the "Track Complaint" page
+
 FUTURE INTEGRATION NOTE:
     - An image uploader -> sent to `ai/vision` for image classification
     - A submit action -> sent to `backend/services` to persist the complaint
@@ -48,6 +61,7 @@ FUTURE INTEGRATION NOTE:
 
 import html
 import traceback
+from datetime import date
 from pathlib import Path
 from typing import Optional
 
@@ -58,6 +72,9 @@ from ai.schemes.scheme_recommender import recommend_schemes
 from ai.speech.speech_service import transcribe_audio
 from ai.speech.speech_utils import delete_temp_file, save_uploaded_audio
 from ai.utils.complaint_id import generate_complaint_id
+from ai.utils.complaint_tracker import SESSION_STATE_REGISTRY_KEY as TRACKER_REGISTRY_KEY
+from ai.utils.complaint_tracker import register_complaint
+from ai.utils.pdf_generator import generate_complaint_pdf
 from frontend.components.theme import page_header, placeholder_card
 from frontend.config.constants import (
     AUDIO_EMPTY_FILE_WARNING,
@@ -79,6 +96,7 @@ from frontend.config.constants import (
     COMPLAINT_RESULT_CARD_TITLE,
     COMPLAINT_SUMMARY_LABEL,
     COMPLAINT_TYPE_LABEL,
+    DOWNLOAD_COMPLAINT_BUTTON_LABEL,
     FILE_COMPLAINT_EYEBROW,
     FILE_COMPLAINT_IMAGE_CARD_TEXT,
     FILE_COMPLAINT_IMAGE_CARD_TITLE,
@@ -90,6 +108,7 @@ from frontend.config.constants import (
     GENERATE_COMPLAINT_BUTTON_LABEL,
     LANGUAGE_CODE_MAP,
     LANGUAGE_OPTIONS,
+    PDF_GENERATION_FAILED_ERROR,
     PROCESS_AUDIO_BUTTON_LABEL,
     SCHEME_DEPARTMENT_LABEL,
     SCHEME_DESCRIPTION_LABEL,
@@ -210,8 +229,23 @@ def _handle_generate_complaint(transcript: Optional[str]) -> None:
     # here, at the integration layer - the complaint generation logic
     # in ai/llm/complaint_generator.py itself is untouched.
     complaint["complaint_id"] = generate_complaint_id()
+    complaint["generated_date"] = date.today().strftime("%d %B %Y")
 
     st.session_state[_COMPLAINT_STATE_KEY] = complaint
+
+    # --- Complaint Tracking Registration (ai/utils/complaint_tracker) ---
+    # Mock, session-only tracking - no database, no authentication.
+    # Registers this complaint so it can later be looked up by ID on
+    # the Track Complaint page. Never raises - a registration failure
+    # should never block the complaint the citizen just generated
+    # from being shown.
+    try:
+        tracking_registry = st.session_state.setdefault(
+            TRACKER_REGISTRY_KEY, {}
+        )
+        register_complaint(tracking_registry, complaint)
+    except Exception:  # noqa: BLE001
+        print(traceback.format_exc())
 
     # --- Government Scheme Recommendation (ai/schemes) ---
     # Runs entirely offline against a local knowledge base, using the
@@ -356,6 +390,46 @@ def _render_scheme_recommendations_if_available() -> None:
     )
 
 
+def _render_download_button_if_available() -> None:
+    """
+    Renders a "Download Complaint" button that generates a
+    professionally formatted PDF (via `ai/utils/pdf_generator.py`)
+    from the currently generated complaint and its recommended
+    schemes, if a complaint has been generated.
+
+    The PDF is (re)built on every rerun from session state - cheap
+    and deterministic - rather than cached, so it always reflects the
+    latest complaint/schemes in view. A PDF generation failure is
+    logged and shown as a friendly error; it never breaks the rest of
+    the page.
+    """
+    complaint = st.session_state.get(_COMPLAINT_STATE_KEY)
+    if not complaint:
+        return
+
+    schemes = st.session_state.get(_SCHEMES_STATE_KEY)
+
+    try:
+        pdf_bytes = generate_complaint_pdf(complaint, schemes)
+    except Exception:  # noqa: BLE001
+        print(traceback.format_exc())
+        st.error(PDF_GENERATION_FAILED_ERROR)
+        return
+
+    complaint_id = str(complaint.get("complaint_id", "")).strip()
+    file_name = f"{complaint_id}.pdf" if complaint_id else "gramvaani_complaint.pdf"
+
+    st.write("")
+    st.download_button(
+        label=DOWNLOAD_COMPLAINT_BUTTON_LABEL,
+        data=pdf_bytes,
+        file_name=file_name,
+        mime="application/pdf",
+        use_container_width=True,
+        key="gv_download_complaint_pdf",
+    )
+
+
 def render() -> None:
     """Renders the File Complaint page."""
     page_header(
@@ -417,6 +491,9 @@ def render() -> None:
 
     # --- Display recommended government schemes, if any ---
     _render_scheme_recommendations_if_available()
+
+    # --- Offer a PDF download of the complaint + schemes, if any ---
+    _render_download_button_if_available()
 
     st.write("")
     st.divider()

@@ -57,16 +57,172 @@ DEFAULT_PAGE: str = "home"
 # ----------------------------------------------------------------------
 # Home page copy
 # ----------------------------------------------------------------------
+class FeatureCard(TypedDict):
+    """Shape of a single entry in the Home page Features grid."""
+
+    icon: str
+    title: str
+    text: str
+
+
+class WorkflowStep(TypedDict):
+    """Shape of a single step in the Voice Complaint Workflow strip."""
+
+    icon: str
+    title: str
+    text: str
+
+
+class HowItWorksStep(TypedDict):
+    """Shape of a single numbered step in the How It Works section."""
+
+    title: str
+    text: str
+
+
+class TrustBadge(TypedDict):
+    """Shape of a single small trust-indicator pill in the hero."""
+
+    icon: str
+    label: str
+
+
 HOME_EYEBROW: str = "Citizen Governance Platform"
 HOME_TITLE: str = "Welcome to GramVaani AI"
 HOME_SUBTITLE: str = APP_TAGLINE
 HOME_DASHBOARD_PLACEHOLDER: str = "Dashboard Coming Soon"
 
+# --- Hero section ---
+HOME_HERO_EYEBROW: str = "🏛 AI-Powered Citizen Governance Platform"
+HOME_HERO_HEADLINE: str = "Your Voice. Heard. Resolved."
+HOME_HERO_SUBHEADLINE: str = (
+    "Speak your complaint in your own language. GramVaani AI transcribes it, "
+    "drafts a formal grievance, matches you with government schemes, and "
+    "tracks it through to resolution - all in one place."
+)
+HOME_HERO_PRIMARY_CTA_LABEL: str = "🎙 File a Complaint"
+HOME_HERO_PRIMARY_CTA_TARGET_PAGE: str = "file_complaint"
+HOME_HERO_SECONDARY_CTA_LABEL: str = "📍 Track My Complaint"
+HOME_HERO_SECONDARY_CTA_TARGET_PAGE: str = "track_complaint"
+
+HOME_TRUST_BADGES: List[TrustBadge] = [
+    {"icon": "🔐", "label": "No Login Required"},
+    {"icon": "🌐", "label": "Multilingual"},
+    {"icon": "🤖", "label": "AI-Powered"},
+    {"icon": "📍", "label": "Real-Time Tracking"},
+]
+
+# --- Statistics section ---
+# Figures are computed live from this browser session's complaint
+# tracking registry (ai/utils/complaint_tracker.py) - there is no
+# database, so these reset whenever the session ends. This section is
+# read-only with respect to that registry; no tracking/backend logic
+# is added or changed to support it.
+HOME_STATS_EYEBROW: str = "This Session"
+HOME_STATS_TITLE: str = "Live Activity"
+HOME_STATS_SUBTITLE: str = (
+    "Figures reflect complaints filed during your current browser "
+    "session only - there is no database behind this platform."
+)
 HOME_STAT_LABELS: List[str] = [
     "Complaints Filed",
-    "Schemes Matched",
-    "Issues Resolved",
+    "In Progress",
+    "Resolved",
 ]
+
+# --- Voice Complaint Workflow section ---
+HOME_WORKFLOW_EYEBROW: str = "The Pipeline"
+HOME_WORKFLOW_TITLE: str = "Voice Complaint Workflow"
+HOME_WORKFLOW_SUBTITLE: str = (
+    "From a spoken sentence to a filed, trackable grievance - here's "
+    "what happens behind the scenes."
+)
+HOME_WORKFLOW_STEPS: List[WorkflowStep] = [
+    {
+        "icon": "🎙",
+        "title": "Record or Upload",
+        "text": "Speak your complaint in Hindi, English, or let the app auto-detect your language.",
+    },
+    {
+        "icon": "📝",
+        "title": "AI Transcription",
+        "text": "Whisper converts your voice into accurate text within seconds.",
+    },
+    {
+        "icon": "🤖",
+        "title": "AI Drafting",
+        "text": "A language model classifies, prioritizes, and drafts a formal complaint for you.",
+    },
+    {
+        "icon": "🏛",
+        "title": "Schemes + Tracking",
+        "text": "Relevant government schemes are matched, and a Complaint ID is issued for tracking.",
+    },
+]
+
+# --- Features section ---
+HOME_FEATURES_EYEBROW: str = "Capabilities"
+HOME_FEATURES_TITLE: str = "Everything a Citizen Needs"
+HOME_FEATURES_SUBTITLE: str = (
+    "A complete, self-service grievance pipeline - no forms, no queues, no login."
+)
+HOME_FEATURES: List[FeatureCard] = [
+    {
+        "icon": "🎙",
+        "title": "Voice-to-Text",
+        "text": "Speak naturally in your own language - Whisper transcribes it instantly and accurately.",
+    },
+    {
+        "icon": "🤖",
+        "title": "AI Complaint Drafting",
+        "text": "An LLM turns your words into a formal, department-ready complaint in seconds.",
+    },
+    {
+        "icon": "🏛",
+        "title": "Scheme Recommendations",
+        "text": "Automatically matched with relevant government welfare schemes based on your complaint.",
+    },
+    {
+        "icon": "📄",
+        "title": "PDF Export",
+        "text": "Download a professionally formatted PDF copy of your complaint for your own records.",
+    },
+    {
+        "icon": "📍",
+        "title": "Status Tracking",
+        "text": "Follow your complaint's journey from Submitted to Resolved using a unique Complaint ID.",
+    },
+    {
+        "icon": "🔐",
+        "title": "Privacy First",
+        "text": "No account, no login. Your data stays within your session - nothing is stored beyond it.",
+    },
+]
+
+# --- How It Works section ---
+HOME_HOW_IT_WORKS_EYEBROW: str = "For Citizens"
+HOME_HOW_IT_WORKS_TITLE: str = "How It Works"
+HOME_HOW_IT_WORKS_SUBTITLE: str = "Three simple steps - no paperwork, no waiting in line."
+HOME_HOW_IT_WORKS_STEPS: List[HowItWorksStep] = [
+    {
+        "title": "Speak Your Complaint",
+        "text": "Upload or record a short voice note describing the issue, in your own language.",
+    },
+    {
+        "title": "Let AI Do the Paperwork",
+        "text": "GramVaani AI transcribes, classifies, and drafts a formal complaint automatically.",
+    },
+    {
+        "title": "Track Until Resolved",
+        "text": "Use your Complaint ID anytime to check status - Submitted, Under Review, Assigned, Resolved.",
+    },
+]
+
+# --- Closing CTA banner ---
+HOME_CTA_BANNER_TITLE: str = "Ready to raise your voice?"
+HOME_CTA_BANNER_SUBTITLE: str = "It takes less than a minute to file your first complaint."
+HOME_CTA_BANNER_BUTTON_LABEL: str = "🎙 Get Started"
+HOME_CTA_BANNER_TARGET_PAGE: str = "file_complaint"
 
 
 # ----------------------------------------------------------------------
@@ -154,6 +310,12 @@ SCHEME_ELIGIBILITY_LABEL: str = "Eligibility"
 SCHEME_DEPARTMENT_LABEL: str = "Responsible Department"
 SCHEME_NO_MATCH_MESSAGE: str = "No direct government scheme found."
 
+# --- PDF Export feature copy (ai/utils/pdf_generator integration) ---
+DOWNLOAD_COMPLAINT_BUTTON_LABEL: str = "📄 Download Complaint"
+PDF_GENERATION_FAILED_ERROR: str = (
+    "Could not generate the PDF for this complaint. Please try again."
+)
+
 
 # ----------------------------------------------------------------------
 # Scheme Finder page copy
@@ -175,12 +337,35 @@ SCHEME_FINDER_PLACEHOLDER: str = "Scheme recommendation engine coming soon"
 # ----------------------------------------------------------------------
 TRACK_COMPLAINT_EYEBROW: str = "Status Tracking"
 TRACK_COMPLAINT_TITLE: str = "Track Complaint"
-TRACK_COMPLAINT_SUBTITLE: str = "This module will allow users to track complaints."
-TRACK_COMPLAINT_CARD_TITLE: str = "📍 How it will work"
-TRACK_COMPLAINT_CARD_TEXT: str = (
-    "Citizens will enter their complaint ID or registered phone "
-    "number to see real-time status updates on their filed complaints."
+TRACK_COMPLAINT_SUBTITLE: str = (
+    "Enter your Complaint ID to check its current status."
 )
+TRACK_COMPLAINT_CARD_TITLE: str = "📍 How it works"
+TRACK_COMPLAINT_CARD_TEXT: str = (
+    "Enter the Complaint ID shown when your complaint was generated "
+    "(e.g. GV-20260713-00001) to see its current status. This is a "
+    "mock tracker - complaint status is simulated locally for this "
+    "browser session only and is not stored in any database."
+)
+
+TRACK_COMPLAINT_ID_INPUT_LABEL: str = "Complaint ID"
+TRACK_COMPLAINT_ID_INPUT_PLACEHOLDER: str = "e.g. GV-20260713-00001"
+TRACK_COMPLAINT_BUTTON_LABEL: str = "🔍 Track Complaint"
+
+TRACK_COMPLAINT_EMPTY_ID_WARNING: str = "Please enter a Complaint ID to track."
+TRACK_COMPLAINT_NOT_FOUND_WARNING: str = (
+    "No complaint found with this ID in the current session. "
+    "Complaint tracking only works for complaints generated during "
+    "this browser session - it resets if the app restarts or the "
+    "session ends."
+)
+
+TRACK_COMPLAINT_RESULT_CARD_TITLE: str = "📦 Complaint Status"
+TRACK_COMPLAINT_STATUS_LABEL: str = "Status"
+TRACK_COMPLAINT_DEPARTMENT_LABEL: str = "Department"
+TRACK_COMPLAINT_DATE_LABEL: str = "Date"
+TRACK_COMPLAINT_PRIORITY_LABEL: str = "Priority"
+
 TRACK_COMPLAINT_PLACEHOLDER: str = "Complaint tracking timeline coming soon"
 
 

@@ -9,3 +9,6 @@ openai-whisper>=20231117
 # removed from this project.
 groq>=0.11.0
 python-dotenv>=1.0.0
+
+# PDF Export (ai/utils/pdf_generator.py)
+reportlab>=4.0.0

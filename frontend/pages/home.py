@@ -3,45 +3,422 @@ home.py
 --------
 Home / landing page for GramVaani AI.
 
-FUTURE INTEGRATION NOTE:
-    The "Dashboard Coming Soon" card below is where live stats will
-    eventually render - e.g. total complaints filed, resolution rate,
-    active schemes. That data will come from `backend/` once it exists.
-    For now this page is pure UI, no data wiring.
+This is a purely presentational redesign - no backend, AI, or
+tracking logic is added or modified here. The only "live" data on
+this page is the Statistics section, which READS the existing mock
+complaint-tracking registry (`ai/utils/complaint_tracker.py`,
+populated by `frontend/pages/file_complaint.py`) to show session
+activity counts. Nothing on this page writes to that registry, and
+no other module's logic is touched.
+
+Sections, top to bottom:
+    1. Hero - headline, subheadline, trust badges, primary/secondary CTAs
+    2. Statistics - live, session-only complaint counts
+    3. Voice Complaint Workflow - the 4-step technical pipeline
+    4. Features - a 6-card capability grid
+    5. How It Works - a simple 3-step citizen-facing journey
+    6. Closing CTA banner
+
+All CSS here is scoped under the `gv-home-` class prefix and injected
+locally by this page only, so it cannot affect the appearance of any
+other page. A `prefers-color-scheme: dark` block is included as a
+defensive enhancement (on top of the white-card-on-dark-canvas look
+already used consistently elsewhere in this app) so this page reads
+cleanly regardless of the viewer's OS/browser color scheme.
 """
 
 import streamlit as st
 
-from frontend.components.theme import page_header, placeholder_card
+from ai.utils.complaint_tracker import (
+    SESSION_STATE_REGISTRY_KEY,
+    STATUS_STAGES,
+    compute_status,
+)
+from frontend.components.theme import (
+    COLOR_BORDER,
+    COLOR_NAVY,
+    COLOR_NAVY_SOFT,
+    COLOR_TEAL,
+    COLOR_TEAL_SOFT,
+    COLOR_TEXT_MUTED,
+    COLOR_WHITE,
+)
 from frontend.config.constants import (
-    HOME_DASHBOARD_PLACEHOLDER,
-    HOME_EYEBROW,
+    HOME_CTA_BANNER_BUTTON_LABEL,
+    HOME_CTA_BANNER_SUBTITLE,
+    HOME_CTA_BANNER_TARGET_PAGE,
+    HOME_CTA_BANNER_TITLE,
+    HOME_FEATURES,
+    HOME_FEATURES_EYEBROW,
+    HOME_FEATURES_SUBTITLE,
+    HOME_FEATURES_TITLE,
+    HOME_HERO_EYEBROW,
+    HOME_HERO_HEADLINE,
+    HOME_HERO_PRIMARY_CTA_LABEL,
+    HOME_HERO_PRIMARY_CTA_TARGET_PAGE,
+    HOME_HERO_SECONDARY_CTA_LABEL,
+    HOME_HERO_SECONDARY_CTA_TARGET_PAGE,
+    HOME_HERO_SUBHEADLINE,
+    HOME_HOW_IT_WORKS_EYEBROW,
+    HOME_HOW_IT_WORKS_STEPS,
+    HOME_HOW_IT_WORKS_SUBTITLE,
+    HOME_HOW_IT_WORKS_TITLE,
     HOME_STAT_LABELS,
-    HOME_SUBTITLE,
-    HOME_TITLE,
+    HOME_STATS_EYEBROW,
+    HOME_STATS_SUBTITLE,
+    HOME_STATS_TITLE,
+    HOME_TRUST_BADGES,
+    HOME_WORKFLOW_EYEBROW,
+    HOME_WORKFLOW_STEPS,
+    HOME_WORKFLOW_SUBTITLE,
+    HOME_WORKFLOW_TITLE,
+)
+
+# ----------------------------------------------------------------------
+# Scoped CSS for this page only (class prefix: gv-home-).
+# ----------------------------------------------------------------------
+_HOME_STYLE = (
+    "<style>"
+    ".gv-home-hero{"
+    f"background:linear-gradient(135deg,{COLOR_NAVY} 0%,{COLOR_NAVY_SOFT} 55%,{COLOR_TEAL} 160%);"
+    "border-radius:20px;padding:2.75rem 2.5rem;margin-bottom:1.75rem;"
+    "box-shadow:0 8px 24px rgba(11,31,58,0.18);"
+    "}"
+    ".gv-home-hero-eyebrow{"
+    "display:inline-block;background:rgba(255,255,255,0.14);color:#EAF6F4;"
+    "font-size:0.78rem;font-weight:600;letter-spacing:0.4px;text-transform:uppercase;"
+    "padding:0.35rem 0.9rem;border-radius:999px;margin-bottom:1rem;"
+    "}"
+    ".gv-home-hero-title{"
+    "color:#FFFFFF;font-size:2.6rem;font-weight:800;line-height:1.15;"
+    "margin:0 0 0.9rem 0;letter-spacing:-0.5px;"
+    "}"
+    ".gv-home-hero-subtitle{"
+    "color:#D7E2EE;font-size:1.08rem;line-height:1.6;max-width:760px;margin:0 0 1.4rem 0;"
+    "}"
+    ".gv-home-trust-row{display:flex;flex-wrap:wrap;gap:0.6rem;margin-top:0.4rem;}"
+    ".gv-home-trust-pill{"
+    "display:inline-flex;align-items:center;gap:0.4rem;background:rgba(255,255,255,0.10);"
+    "border:1px solid rgba(255,255,255,0.20);color:#F2F6FA;font-size:0.82rem;font-weight:600;"
+    "padding:0.4rem 0.85rem;border-radius:999px;"
+    "}"
+    ".gv-home-section{margin:2.6rem 0 1.2rem 0;}"
+    ".gv-home-section-eyebrow{"
+    f"display:inline-block;background:{COLOR_TEAL_SOFT};color:{COLOR_TEAL};"
+    "font-size:0.75rem;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;"
+    "padding:0.3rem 0.75rem;border-radius:999px;margin-bottom:0.6rem;"
+    "}"
+    ".gv-home-section-title{"
+    f"color:{COLOR_NAVY};font-size:1.65rem;font-weight:800;margin:0 0 0.35rem 0;"
+    "}"
+    ".gv-home-section-subtitle{"
+    f"color:{COLOR_TEXT_MUTED};font-size:0.98rem;line-height:1.55;max-width:720px;margin:0 0 1.4rem 0;"
+    "}"
+    ".gv-home-grid{display:grid;gap:1.1rem;}"
+    ".gv-home-grid-2{grid-template-columns:repeat(2,1fr);}"
+    ".gv-home-grid-3{grid-template-columns:repeat(3,1fr);}"
+    ".gv-home-grid-4{grid-template-columns:repeat(4,1fr);}"
+    "@media (max-width:1100px){.gv-home-grid-3,.gv-home-grid-4{grid-template-columns:repeat(2,1fr);}}"
+    "@media (max-width:680px){.gv-home-grid-2,.gv-home-grid-3,.gv-home-grid-4{grid-template-columns:1fr;}}"
+    ".gv-home-card{"
+    f"background-color:{COLOR_WHITE};border:1px solid {COLOR_BORDER};border-radius:16px;"
+    "padding:1.5rem;box-shadow:0 1px 3px rgba(11,31,58,0.06);transition:box-shadow 0.15s ease,transform 0.15s ease;"
+    "}"
+    ".gv-home-card:hover{box-shadow:0 8px 20px rgba(11,31,58,0.12);transform:translateY(-2px);}"
+    ".gv-home-icon-badge{"
+    f"width:46px;height:46px;border-radius:12px;background-color:{COLOR_TEAL_SOFT};"
+    "display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:0.9rem;"
+    "}"
+    ".gv-home-card-title{"
+    f"color:{COLOR_NAVY};font-size:1.05rem;font-weight:700;margin:0 0 0.4rem 0;"
+    "}"
+    ".gv-home-card-text{"
+    f"color:{COLOR_TEXT_MUTED};font-size:0.9rem;line-height:1.5;margin:0;"
+    "}"
+    ".gv-home-stat-card{"
+    f"background-color:{COLOR_WHITE};border:1px solid {COLOR_BORDER};border-radius:16px;"
+    "padding:1.4rem 1.2rem;box-shadow:0 1px 3px rgba(11,31,58,0.06);"
+    "display:flex;align-items:center;gap:0.9rem;"
+    "}"
+    ".gv-home-stat-icon{"
+    f"width:44px;height:44px;border-radius:999px;background-color:{COLOR_TEAL_SOFT};"
+    "display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;"
+    "}"
+    ".gv-home-stat-value{"
+    f"color:{COLOR_NAVY};font-size:1.75rem;font-weight:800;line-height:1.1;display:block;"
+    "}"
+    ".gv-home-stat-label{"
+    f"color:{COLOR_TEXT_MUTED};font-size:0.8rem;font-weight:600;margin-top:0.15rem;"
+    "}"
+    ".gv-home-workflow-step{"
+    f"background-color:{COLOR_WHITE};border:1px solid {COLOR_BORDER};border-radius:16px;"
+    "padding:1.4rem 1.1rem;text-align:center;position:relative;"
+    "}"
+    ".gv-home-workflow-icon{"
+    f"width:50px;height:50px;border-radius:999px;background-color:{COLOR_NAVY};"
+    "display:flex;align-items:center;justify-content:center;font-size:1.4rem;"
+    "margin:0 auto 0.8rem auto;"
+    "}"
+    ".gv-home-workflow-step-number{"
+    f"color:{COLOR_TEAL};font-size:0.72rem;font-weight:800;letter-spacing:0.5px;"
+    "text-transform:uppercase;margin-bottom:0.3rem;"
+    "}"
+    ".gv-home-workflow-title{"
+    f"color:{COLOR_NAVY};font-size:0.98rem;font-weight:700;margin:0 0 0.35rem 0;"
+    "}"
+    ".gv-home-workflow-text{"
+    f"color:{COLOR_TEXT_MUTED};font-size:0.85rem;line-height:1.45;margin:0;"
+    "}"
+    ".gv-home-how-step{"
+    f"background-color:{COLOR_WHITE};border:1px solid {COLOR_BORDER};border-radius:16px;"
+    "padding:1.6rem 1.4rem;"
+    "}"
+    ".gv-home-how-step-number{"
+    f"width:38px;height:38px;border-radius:999px;background-color:{COLOR_TEAL};color:#FFFFFF;"
+    "display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:800;"
+    "margin-bottom:0.9rem;"
+    "}"
+    ".gv-home-how-title{"
+    f"color:{COLOR_NAVY};font-size:1.05rem;font-weight:700;margin:0 0 0.4rem 0;"
+    "}"
+    ".gv-home-how-text{"
+    f"color:{COLOR_TEXT_MUTED};font-size:0.9rem;line-height:1.5;margin:0;"
+    "}"
+    ".gv-home-cta-banner{"
+    f"background:linear-gradient(120deg,{COLOR_TEAL} 0%,#0B8377 100%);border-radius:18px;"
+    "padding:2.2rem 2.4rem;margin:2.6rem 0 1rem 0;display:flex;align-items:center;"
+    "justify-content:space-between;flex-wrap:wrap;gap:1rem;"
+    "}"
+    ".gv-home-cta-banner-title{color:#FFFFFF;font-size:1.35rem;font-weight:800;margin:0 0 0.25rem 0;}"
+    ".gv-home-cta-banner-subtitle{color:#EAF6F4;font-size:0.92rem;margin:0;}"
+    "@media (prefers-color-scheme: dark){"
+    ".gv-home-card,.gv-home-stat-card,.gv-home-workflow-step,.gv-home-how-step{"
+    "background-color:#16202E;border-color:#28374A;"
+    "}"
+    ".gv-home-card-title,.gv-home-stat-value,.gv-home-workflow-title,.gv-home-how-title,"
+    ".gv-home-section-title{color:#F2F6FA;}"
+    ".gv-home-card-text,.gv-home-stat-label,.gv-home-workflow-text,.gv-home-how-text,"
+    ".gv-home-section-subtitle{color:#AAB8C8;}"
+    "}"
+    "</style>"
 )
 
 
-def render() -> None:
-    """Renders the Home page."""
-    page_header(
-        title=HOME_TITLE,
-        subtitle=HOME_SUBTITLE,
-        eyebrow=HOME_EYEBROW,
+def _get_session_stats() -> dict:
+    """
+    Computes live, session-only complaint counts from the existing
+    mock complaint tracking registry. Read-only: does not write to
+    `st.session_state` and does not alter `ai/utils/complaint_tracker.py`
+    in any way.
+
+    Returns:
+        A dict with "filed", "in_progress", and "resolved" integer
+        counts for the current browser session.
+    """
+    registry = st.session_state.get(SESSION_STATE_REGISTRY_KEY, {})
+
+    filed = len(registry)
+    resolved = 0
+    in_progress = 0
+
+    for record in registry.values():
+        status = compute_status(record.get("generated_at", ""))
+        if status == STATUS_STAGES[-1]:  # "Resolved"
+            resolved += 1
+        elif status != STATUS_STAGES[0]:  # "Under Review" or "Assigned"
+            in_progress += 1
+
+    return {"filed": filed, "in_progress": in_progress, "resolved": resolved}
+
+
+def _navigate_to(page_key: str) -> None:
+    """
+    Switches the active page using the same `st.session_state`
+    mechanism `frontend/components/sidebar.py` already uses - this is
+    frontend page routing, not backend logic, and touches no other
+    file.
+
+    Args:
+        page_key: A key from `NAV_ITEMS` in `frontend/config/constants.py`
+            (e.g. "file_complaint", "track_complaint").
+    """
+    st.session_state["current_page"] = page_key
+    st.rerun()
+
+
+def _render_hero() -> None:
+    """Renders the hero section: headline, subheadline, trust badges."""
+    trust_pills = "".join(
+        f'<span class="gv-home-trust-pill">{badge["icon"]} {badge["label"]}</span>'
+        for badge in HOME_TRUST_BADGES
     )
 
-    # Quick-glance summary chips (static placeholders for now)
-    columns = st.columns(len(HOME_STAT_LABELS))
-    for column, label in zip(columns, HOME_STAT_LABELS):
-        with column:
-            st.markdown(
-                f"<div class='gv-chip'><span class='gv-chip-value'>—</span>"
-                f"<span class='gv-chip-label'>{label}</span></div>",
-                unsafe_allow_html=True,
-            )
+    hero_html = (
+        '<div class="gv-home-hero">'
+        f'<span class="gv-home-hero-eyebrow">{HOME_HERO_EYEBROW}</span>'
+        f"<h1 class=\"gv-home-hero-title\">{HOME_HERO_HEADLINE}</h1>"
+        f'<p class="gv-home-hero-subtitle">{HOME_HERO_SUBHEADLINE}</p>'
+        f'<div class="gv-home-trust-row">{trust_pills}</div>'
+        "</div>"
+    )
+    st.markdown(_HOME_STYLE + hero_html, unsafe_allow_html=True)
 
-    st.write("")  # spacing
-    st.divider()
+    cta_col1, cta_col2, _spacer = st.columns([1, 1, 2])
+    with cta_col1:
+        if st.button(
+            HOME_HERO_PRIMARY_CTA_LABEL,
+            use_container_width=True,
+            type="primary",
+            key="gv_home_hero_primary_cta",
+        ):
+            _navigate_to(HOME_HERO_PRIMARY_CTA_TARGET_PAGE)
+    with cta_col2:
+        if st.button(
+            HOME_HERO_SECONDARY_CTA_LABEL,
+            use_container_width=True,
+            key="gv_home_hero_secondary_cta",
+        ):
+            _navigate_to(HOME_HERO_SECONDARY_CTA_TARGET_PAGE)
 
-    # Main dashboard placeholder
-    placeholder_card(icon="📊", text=HOME_DASHBOARD_PLACEHOLDER)
+
+def _render_section_header(eyebrow: str, title: str, subtitle: str) -> None:
+    """Renders a consistent eyebrow + title + subtitle block for a section."""
+    st.markdown(
+        '<div class="gv-home-section">'
+        f'<span class="gv-home-section-eyebrow">{eyebrow}</span>'
+        f'<h2 class="gv-home-section-title">{title}</h2>'
+        f'<p class="gv-home-section-subtitle">{subtitle}</p>'
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
+
+def _render_statistics() -> None:
+    """Renders the live, session-only Statistics section."""
+    _render_section_header(HOME_STATS_EYEBROW, HOME_STATS_TITLE, HOME_STATS_SUBTITLE)
+
+    stats = _get_session_stats()
+    stat_values = [stats["filed"], stats["in_progress"], stats["resolved"]]
+    stat_icons = ["🧾", "⏳", "✅"]
+
+    cards = "".join(
+        '<div class="gv-home-stat-card">'
+        f'<div class="gv-home-stat-icon">{icon}</div>'
+        "<div>"
+        f'<span class="gv-home-stat-value">{value}</span>'
+        f'<div class="gv-home-stat-label">{label}</div>'
+        "</div>"
+        "</div>"
+        for icon, value, label in zip(stat_icons, stat_values, HOME_STAT_LABELS)
+    )
+
+    st.markdown(
+        f'<div class="gv-home-grid gv-home-grid-3">{cards}</div>',
+        unsafe_allow_html=True,
+    )
+
+
+def _render_workflow() -> None:
+    """Renders the Voice Complaint Workflow step strip."""
+    _render_section_header(
+        HOME_WORKFLOW_EYEBROW, HOME_WORKFLOW_TITLE, HOME_WORKFLOW_SUBTITLE
+    )
+
+    steps = "".join(
+        '<div class="gv-home-workflow-step">'
+        f'<div class="gv-home-workflow-step-number">Step {index + 1}</div>'
+        f'<div class="gv-home-workflow-icon">{step["icon"]}</div>'
+        f'<div class="gv-home-workflow-title">{step["title"]}</div>'
+        f'<p class="gv-home-workflow-text">{step["text"]}</p>'
+        "</div>"
+        for index, step in enumerate(HOME_WORKFLOW_STEPS)
+    )
+
+    st.markdown(
+        f'<div class="gv-home-grid gv-home-grid-4">{steps}</div>',
+        unsafe_allow_html=True,
+    )
+
+
+def _render_features() -> None:
+    """Renders the Features capability grid."""
+    _render_section_header(
+        HOME_FEATURES_EYEBROW, HOME_FEATURES_TITLE, HOME_FEATURES_SUBTITLE
+    )
+
+    cards = "".join(
+        '<div class="gv-home-card">'
+        f'<div class="gv-home-icon-badge">{feature["icon"]}</div>'
+        f'<div class="gv-home-card-title">{feature["title"]}</div>'
+        f'<p class="gv-home-card-text">{feature["text"]}</p>'
+        "</div>"
+        for feature in HOME_FEATURES
+    )
+
+    st.markdown(
+        f'<div class="gv-home-grid gv-home-grid-3">{cards}</div>',
+        unsafe_allow_html=True,
+    )
+
+
+def _render_how_it_works() -> None:
+    """Renders the citizen-facing How It Works steps."""
+    _render_section_header(
+        HOME_HOW_IT_WORKS_EYEBROW, HOME_HOW_IT_WORKS_TITLE, HOME_HOW_IT_WORKS_SUBTITLE
+    )
+
+    steps = "".join(
+        '<div class="gv-home-how-step">'
+        f'<div class="gv-home-how-step-number">{index + 1}</div>'
+        f'<div class="gv-home-how-title">{step["title"]}</div>'
+        f'<p class="gv-home-how-text">{step["text"]}</p>'
+        "</div>"
+        for index, step in enumerate(HOME_HOW_IT_WORKS_STEPS)
+    )
+
+    st.markdown(
+        f'<div class="gv-home-grid gv-home-grid-3">{steps}</div>',
+        unsafe_allow_html=True,
+    )
+
+
+def _render_cta_banner() -> None:
+    """Renders the closing call-to-action banner with a navigation button."""
+    st.markdown(
+        '<div class="gv-home-cta-banner">'
+        "<div>"
+        f'<p class="gv-home-cta-banner-title">{HOME_CTA_BANNER_TITLE}</p>'
+        f'<p class="gv-home-cta-banner-subtitle">{HOME_CTA_BANNER_SUBTITLE}</p>'
+        "</div>"
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
+    button_col, _spacer = st.columns([1, 3])
+    with button_col:
+        if st.button(
+            HOME_CTA_BANNER_BUTTON_LABEL,
+            use_container_width=True,
+            type="primary",
+            key="gv_home_cta_banner_button",
+        ):
+            _navigate_to(HOME_CTA_BANNER_TARGET_PAGE)
+
+
+def render() -> None:
+    """Renders the redesigned Home page."""
+    _render_hero()
+
+    st.write("")
+    _render_statistics()
+
+    st.write("")
+    _render_workflow()
+
+    st.write("")
+    _render_features()
+
+    st.write("")
+    _render_how_it_works()
+
+    _render_cta_banner()
