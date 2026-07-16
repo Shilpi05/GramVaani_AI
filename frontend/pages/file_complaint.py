@@ -291,7 +291,12 @@ def _render_transcript_if_available() -> None:
 
     # "Generate Complaint" only appears once a transcript exists.
     st.write("")
-    if st.button(GENERATE_COMPLAINT_BUTTON_LABEL, use_container_width=True):
+    if st.button(
+        GENERATE_COMPLAINT_BUTTON_LABEL,
+        use_container_width=True,
+        type="primary",
+        key="gv_generate_complaint_button",
+    ):
         _handle_generate_complaint(transcript)
 
 
@@ -363,6 +368,7 @@ def _render_download_button_if_available() -> None:
         file_name=file_name,
         mime="application/pdf",
         use_container_width=True,
+        type="primary",
         key="gv_download_complaint_pdf",
     )
 
@@ -405,7 +411,12 @@ def render() -> None:
             key="gv_audio_uploader",
         )
 
-        if st.button(PROCESS_AUDIO_BUTTON_LABEL, use_container_width=True):
+        if st.button(
+            PROCESS_AUDIO_BUTTON_LABEL,
+            use_container_width=True,
+            type="primary",
+            key="gv_process_audio_button",
+        ):
             language_code = LANGUAGE_CODE_MAP[selected_language_label]
             _handle_process_audio(uploaded_audio, language_code)
 

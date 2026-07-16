@@ -225,7 +225,12 @@ def render() -> None:
         key="gv_track_complaint_id_input",
     )
 
-    if st.button(TRACK_COMPLAINT_BUTTON_LABEL, use_container_width=True):
+    if st.button(
+        TRACK_COMPLAINT_BUTTON_LABEL,
+        use_container_width=True,
+        type="primary",
+        key="gv_track_complaint_button",
+    ):
         query_id = (complaint_id_input or "").strip()
 
         if not query_id:

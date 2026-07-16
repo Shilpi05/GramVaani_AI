@@ -1,23 +1,32 @@
 # ai/speech
 
 ## Purpose
-Handles speech-to-text (and eventually text-to-speech) for citizen
-voice complaints, supporting multiple Indian languages/dialects so
-citizens can speak naturally instead of typing.
+Speech-to-text for citizen voice complaints, using OpenAI's Whisper
+model, so citizens can speak naturally instead of typing.
+
+## Files
+
+- `speech_service.py` — loads and caches a Whisper model, and exposes
+  `transcribe_audio(audio_path, language=None) -> str`. Language is
+  optional; when omitted, Whisper auto-detects it.
+- `speech_utils.py` — filesystem helpers used around the transcription
+  call: `is_supported_extension()`, `save_uploaded_audio()` (writes a
+  Streamlit `UploadedFile` to a temp path), and `delete_temp_file()`
+  (cleanup after transcription).
 
 ## Expected Input
-- Raw audio file or byte stream (e.g. `.wav`, `.mp3`, `.ogg`) captured
-  from the "Voice Complaint" recorder on the File Complaint page.
-- Optional language hint (e.g. `hi`, `en`, `bho`) if known.
+An audio file path (`.wav`, `.mp3`, `.m4a` - see `speech_utils.py`
+for the exact supported-extension list) and an optional language
+code.
 
 ## Expected Output
-- Transcribed text of the complaint.
-- Detected/confirmed language code.
-- Confidence score for the transcription.
+The transcribed text as a plain string.
 
-## Future Integration
-Will be called from `frontend/pages/file_complaint.py` once the voice
-recorder widget is implemented, and its output will be passed to
-`backend/services` for storage alongside the complaint record.
+## Configuration
+Optional `WHISPER_MODEL` environment variable to choose model size
+(`tiny`, `base`, `small`, `medium`, `large`); defaults to `small`.
 
-No implementation exists yet.
+## Used by
+`frontend/pages/file_complaint.py`'s "Process Audio" button: the
+citizen's uploaded audio is saved to a temp file, transcribed here,
+and the temp file is deleted immediately after.

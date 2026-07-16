@@ -85,6 +85,13 @@ from frontend.utils.helpers import navigate_to
 # ----------------------------------------------------------------------
 # Scoped CSS for this page only (class prefix: gv-home-).
 #
+# All 4 grid-card types below (.gv-home-card, .gv-home-stat-card,
+# .gv-home-workflow-step, .gv-home-how-step) deliberately share the
+# same padding (1.5rem) and border-radius ({RADIUS_LG}) - they're the
+# same visual component (white bordered card in a grid) reused across
+# 4 sections, so they should look identical regardless of which
+# section they're in.
+#
 # NOTE on .gv-home-hero-title's `!important`: Streamlit applies its
 # own default color to every <h1> (sourced from .streamlit/config.toml's
 # textColor = navy), which has higher CSS specificity than a
@@ -156,7 +163,7 @@ _HOME_STYLE = (
     "}"
     ".gv-home-stat-card{"
     f"background-color:{COLOR_WHITE};border:1px solid {COLOR_BORDER};border-radius:{RADIUS_LG};"
-    "padding:1.4rem 1.2rem;box-shadow:0 1px 3px rgba(11,31,58,0.06);"
+    "padding:1.5rem;box-shadow:0 1px 3px rgba(11,31,58,0.06);"
     "display:flex;align-items:center;gap:0.9rem;"
     "}"
     ".gv-home-stat-icon{"
@@ -171,7 +178,7 @@ _HOME_STYLE = (
     "}"
     ".gv-home-workflow-step{"
     f"background-color:{COLOR_WHITE};border:1px solid {COLOR_BORDER};border-radius:{RADIUS_LG};"
-    "padding:1.4rem 1.1rem;text-align:center;position:relative;"
+    "padding:1.5rem;text-align:center;position:relative;"
     "}"
     ".gv-home-workflow-icon{"
     f"width:50px;height:50px;border-radius:999px;background-color:{COLOR_NAVY};"
@@ -190,7 +197,7 @@ _HOME_STYLE = (
     "}"
     ".gv-home-how-step{"
     f"background-color:{COLOR_WHITE};border:1px solid {COLOR_BORDER};border-radius:{RADIUS_LG};"
-    "padding:1.6rem 1.4rem;"
+    "padding:1.5rem;"
     "}"
     ".gv-home-how-step-number{"
     f"width:38px;height:38px;border-radius:999px;background-color:{COLOR_TEAL};color:{COLOR_WHITE};"

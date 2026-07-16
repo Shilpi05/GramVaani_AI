@@ -59,6 +59,13 @@ FONT_SIZE_SUBTITLE: str = "1.05rem"
 FONT_SIZE_EYEBROW: str = "0.75rem"
 FONT_SIZE_CHIP_VALUE: str = "1.4rem"
 FONT_SIZE_CHIP_LABEL: str = "0.75rem"
+# The two most-used headings in the app - every page's title (via
+# page_header()) and every card's <h3> - previously had no explicit
+# font-size at all and fell back to the browser's default h1/h3
+# sizing. Every other text element in this file has a deliberate
+# size; these are the last two gaps.
+FONT_SIZE_PAGE_TITLE: str = "2rem"
+FONT_SIZE_CARD_TITLE: str = "1.15rem"
 
 # ----------------------------------------------------------------------
 # Spacing constants
@@ -165,6 +172,7 @@ def inject_global_styles() -> None:
             /* ---------- Page header ---------- */
             .gv-page-title {{
                 color: {COLOR_NAVY};
+                font-size: {FONT_SIZE_PAGE_TITLE};
                 font-weight: 700;
                 margin-bottom: 0.1rem;
             }}
@@ -199,6 +207,7 @@ def inject_global_styles() -> None:
 
             .gv-card h3 {{
                 color: {COLOR_NAVY};
+                font-size: {FONT_SIZE_CARD_TITLE};
                 margin-top: 0;
             }}
 
