@@ -27,6 +27,11 @@ APP_ICON: str = "🗣️"
 APP_VERSION: str = "v1.0"
 APP_STAGE_LABEL: str = "AI-Powered"
 
+# Default theme (light) shown before the citizen sets a preference on
+# the Settings page. Read by app.py via st.session_state, so it never
+# overrides an explicit choice made during the session.
+DEFAULT_DARK_MODE: bool = False
+
 SIDEBAR_BRAND_ICON: str = "🗣️"
 SIDEBAR_TAGLINE: str = "Voice of the Citizen"
 SIDEBAR_FOOTER: str = f"{APP_VERSION} · {APP_STAGE_LABEL}"
@@ -231,19 +236,30 @@ HOME_CTA_BANNER_TARGET_PAGE: str = "file_complaint"
 FILE_COMPLAINT_EYEBROW: str = "Grievance Redressal"
 FILE_COMPLAINT_TITLE: str = "File Complaint"
 FILE_COMPLAINT_SUBTITLE: str = (
-    "This module will allow citizens to register complaints using voice and images."
+    "Register a complaint using your voice, with an optional evidence photo."
 )
 FILE_COMPLAINT_VOICE_CARD_TITLE: str = "🎙 Voice Complaint"
 FILE_COMPLAINT_VOICE_CARD_TEXT: str = (
-    "Citizens will be able to record their complaint in their "
-    "own language and have it transcribed automatically."
+    "Record your complaint in your own language and it will be "
+    "transcribed automatically."
 )
 FILE_COMPLAINT_IMAGE_CARD_TITLE: str = "📷 Upload Evidence"
 FILE_COMPLAINT_IMAGE_CARD_TEXT: str = (
-    "Citizens will be able to attach photos of the issue "
-    "(e.g. potholes, garbage, broken infrastructure)."
+    "Optionally attach a photo of the issue (e.g. potholes, garbage, "
+    "broken infrastructure) to support your complaint."
 )
-FILE_COMPLAINT_PLACEHOLDER: str = "Complaint submission workflow coming soon"
+
+# --- Evidence upload feature copy (frontend/components/evidence_uploader.py) ---
+EVIDENCE_UPLOADER_LABEL: str = "Upload a photo"
+EVIDENCE_UPLOADER_HELP: str = "Supported formats: JPG, JPEG, PNG (max 5 MB)"
+EVIDENCE_UPLOAD_SUCCESS_MESSAGE: str = "Evidence photo uploaded successfully."
+EVIDENCE_EMPTY_STATE_TEXT: str = "No evidence photo attached yet."
+EVIDENCE_REMOVE_BUTTON_LABEL: str = "🗑 Remove Photo"
+EVIDENCE_INVALID_TYPE_ERROR: str = (
+    "That file couldn't be used. Please upload a JPG, JPEG, or PNG image."
+)
+EVIDENCE_FILE_TOO_LARGE_ERROR: str = "That image is too large. Please upload a file under 5 MB."
+EVIDENCE_ATTACHED_NOTE: str = "📎 Evidence photo attached:"
 
 # --- Speech-to-Text feature copy (ai/speech integration) ---
 AUDIO_UPLOADER_LABEL: str = "Upload your complaint audio"
@@ -304,8 +320,6 @@ COMPLAINT_GENERATION_FAILED_ERROR: str = (
 
 # --- Government Scheme Recommendation feature copy (ai/schemes integration) ---
 SCHEME_RECOMMENDATION_CARD_TITLE: str = "🏛 Recommended Government Schemes"
-SCHEME_NAME_LABEL: str = "Scheme Name"
-SCHEME_DESCRIPTION_LABEL: str = "Description"
 SCHEME_ELIGIBILITY_LABEL: str = "Eligibility"
 SCHEME_DEPARTMENT_LABEL: str = "Responsible Department"
 SCHEME_NO_MATCH_MESSAGE: str = "No direct government scheme found."

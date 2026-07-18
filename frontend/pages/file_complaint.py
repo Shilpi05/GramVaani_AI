@@ -76,7 +76,15 @@ from ai.utils.complaint_id import generate_complaint_id
 from ai.utils.complaint_tracker import SESSION_STATE_REGISTRY_KEY as TRACKER_REGISTRY_KEY
 from ai.utils.complaint_tracker import register_complaint
 from ai.utils.pdf_generator import generate_complaint_pdf
-from frontend.components.theme import page_header
+from frontend.components.evidence_uploader import (
+    EVIDENCE_STATE_KEY,
+    render_evidence_upload_section,
+)
+from frontend.components.theme import (
+    department_badge_html,
+    page_header,
+    priority_badge_html,
+)
 from frontend.config.constants import (
     AUDIO_EMPTY_FILE_WARNING,
     AUDIO_NO_FILE_WARNING,
@@ -98,6 +106,7 @@ from frontend.config.constants import (
     COMPLAINT_SUMMARY_LABEL,
     COMPLAINT_TYPE_LABEL,
     DOWNLOAD_COMPLAINT_BUTTON_LABEL,
+    EVIDENCE_ATTACHED_NOTE,
     FILE_COMPLAINT_EYEBROW,
     FILE_COMPLAINT_IMAGE_CARD_TEXT,
     FILE_COMPLAINT_IMAGE_CARD_TITLE,
@@ -308,12 +317,26 @@ def _render_complaint_result_if_available() -> None:
 
     # Escape every field before rendering as HTML - the values come
     # from an LLM response and should never be trusted as safe markup.
+    # Department/priority are rendered as badges via theme.py helpers,
+    # which handle their own escaping internally.
     complaint_id = html.escape(str(complaint.get("complaint_id", "")))
     complaint_type = html.escape(str(complaint.get("complaint_type", "")))
-    department = html.escape(str(complaint.get("department", "")))
-    priority = html.escape(str(complaint.get("priority", "")))
+    department_badge = department_badge_html(complaint.get("department", ""))
+    priority_badge = priority_badge_html(complaint.get("priority", ""))
     summary = html.escape(str(complaint.get("summary", "")))
     formal_complaint = html.escape(str(complaint.get("formal_complaint", "")))
+
+    # Evidence photo, if the citizen attached one via
+    # frontend/components/evidence_uploader.py. Purely a note that a
+    # photo exists (filename only) - the image itself is never
+    # inspected or classified.
+    evidence = st.session_state.get(EVIDENCE_STATE_KEY)
+    evidence_row = ""
+    if evidence:
+        evidence_filename = html.escape(str(evidence.get("filename", "")))
+        evidence_row = (
+            f"<p>{EVIDENCE_ATTACHED_NOTE} <strong>{evidence_filename}</strong></p>"
+        )
 
     st.write("")
     st.markdown(
@@ -322,10 +345,11 @@ def _render_complaint_result_if_available() -> None:
             <h3>{COMPLAINT_RESULT_CARD_TITLE}</h3>
             <p><strong>{COMPLAINT_ID_LABEL}:</strong> {complaint_id}</p>
             <p><strong>{COMPLAINT_TYPE_LABEL}:</strong> {complaint_type}</p>
-            <p><strong>{COMPLAINT_DEPARTMENT_LABEL}:</strong> {department}</p>
-            <p><strong>{COMPLAINT_PRIORITY_LABEL}:</strong> {priority}</p>
+            <p><strong>{COMPLAINT_DEPARTMENT_LABEL}:</strong> {department_badge}</p>
+            <p><strong>{COMPLAINT_PRIORITY_LABEL}:</strong> {priority_badge}</p>
             <p><strong>{COMPLAINT_SUMMARY_LABEL}:</strong> {summary}</p>
             <p><strong>{COMPLAINT_FORMAL_TEXT_LABEL}:</strong><br>{formal_complaint}</p>
+            {evidence_row}
         </div>
         """,
         unsafe_allow_html=True,
@@ -430,6 +454,11 @@ def render() -> None:
             """,
             unsafe_allow_html=True,
         )
+
+        st.write("")
+
+        # --- Evidence photo upload (frontend/components/evidence_uploader.py) ---
+        render_evidence_upload_section()
 
     # --- Display the recognized speech + "Generate Complaint" trigger ---
     _render_transcript_if_available()

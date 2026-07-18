@@ -5,17 +5,14 @@ Entry point for the GramVaani AI Streamlit application.
 
 This file is intentionally thin. Its only job is to:
     1. Configure the page (title, icon, layout)
-    2. Load the global theme (CSS injection)
+    2. Load the global theme (CSS injection), honoring the citizen's
+       saved theme preference from the Settings page
     3. Load the sidebar and get the active page
     4. Route to the correct page's `render()` function
 
 All actual page content lives in `frontend/pages/`.
 All shared UI pieces (sidebar, theme) live in `frontend/components/`.
 All static text/navigation data lives in `frontend/config/constants.py`.
-
-Today this is a UI skeleton only - no AI, no backend, no APIs.
-See the "FUTURE INTEGRATION NOTE" comments in each page file for
-where real logic will eventually be wired in.
 """
 
 from typing import Callable, Dict
@@ -24,7 +21,7 @@ import streamlit as st
 
 from frontend.components.sidebar import render_sidebar
 from frontend.components.theme import inject_global_styles
-from frontend.config.constants import APP_ICON, APP_NAME
+from frontend.config.constants import APP_ICON, APP_NAME, DEFAULT_DARK_MODE
 from frontend.pages import (
     file_complaint,
     home,
@@ -60,7 +57,8 @@ def configure_page() -> None:
 def main() -> None:
     """Application entry point."""
     configure_page()
-    inject_global_styles()
+    dark_mode = st.session_state.get("gv_dark_mode", DEFAULT_DARK_MODE)
+    inject_global_styles(dark_mode=dark_mode)
 
     active_page_key = render_sidebar()
 

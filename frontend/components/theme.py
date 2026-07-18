@@ -21,6 +21,8 @@ Color system (kept deliberately minimal, per design spec):
     Teal   -> interactive accents (buttons, active states, highlights)
 """
 
+import html
+
 import streamlit as st
 
 # ----------------------------------------------------------------------
@@ -46,6 +48,18 @@ COLOR_TEXT_ON_NAVY: str = "#F2F6FA"
 COLOR_TEXT_ON_NAVY_MUTED: str = "#D7E2EE"
 COLOR_TEXT_ON_TEAL: str = "#EAF6F4"
 
+# Dark-mode surface tokens - used only for the main content area's
+# background/cards when the citizen selects "Dark" in Settings. The
+# sidebar and hero/CTA banner gradients are brand-colored and stay
+# navy/teal regardless of this setting (same reasoning many products
+# use for a colored header/nav that doesn't follow light/dark mode).
+# Text-on-dark reuses COLOR_TEXT_ON_NAVY / COLOR_TEXT_ON_NAVY_MUTED
+# above rather than introducing yet more near-duplicate tokens.
+COLOR_DARK_BG: str = "#0B1626"
+COLOR_DARK_CARD: str = "#13233C"
+COLOR_DARK_BORDER: str = "#24384F"
+COLOR_DARK_BADGE_MEDIUM_BG: str = "#1C3350"
+
 # ----------------------------------------------------------------------
 # Typography constants
 # ----------------------------------------------------------------------
@@ -57,8 +71,6 @@ FONT_SIZE_TAGLINE: str = "0.78rem"
 FONT_SIZE_FOOTER: str = "0.7rem"
 FONT_SIZE_SUBTITLE: str = "1.05rem"
 FONT_SIZE_EYEBROW: str = "0.75rem"
-FONT_SIZE_CHIP_VALUE: str = "1.4rem"
-FONT_SIZE_CHIP_LABEL: str = "0.75rem"
 # The two most-used headings in the app - every page's title (via
 # page_header()) and every card's <h3> - previously had no explicit
 # font-size at all and fell back to the browser's default h1/h3
@@ -80,13 +92,42 @@ SPACING_XL: str = "3rem"
 # Border radius constants
 # ----------------------------------------------------------------------
 RADIUS_SM: str = "8px"
-RADIUS_MD: str = "10px"
 RADIUS_LG: str = "14px"
 RADIUS_PILL: str = "999px"
 
 
-def inject_global_styles() -> None:
-    """Injects global CSS used across every page of the app."""
+def inject_global_styles(dark_mode: bool = False) -> None:
+    """
+    Injects global CSS used across every page of the app.
+
+    Args:
+        dark_mode: When True, swaps the main content area's surface
+            colors (page background, card background/border, primary
+            and muted text, badge fills) to dark equivalents. The
+            sidebar and the hero/CTA banner gradients are brand
+            chrome and intentionally stay navy/teal regardless of
+            this setting - only content-area surfaces toggle. Set via
+            the "Theme" preference on the Settings page.
+    """
+    if dark_mode:
+        surface_bg = COLOR_DARK_BG
+        card_bg = COLOR_DARK_CARD
+        card_border = COLOR_DARK_BORDER
+        text_primary = COLOR_TEXT_ON_NAVY
+        text_muted = COLOR_TEXT_ON_NAVY_MUTED
+        badge_high_bg = COLOR_TEAL
+        badge_high_text = COLOR_DARK_BG
+        badge_medium_bg = COLOR_DARK_BADGE_MEDIUM_BG
+    else:
+        surface_bg = COLOR_BG
+        card_bg = COLOR_WHITE
+        card_border = COLOR_BORDER
+        text_primary = COLOR_NAVY
+        text_muted = COLOR_TEXT_MUTED
+        badge_high_bg = COLOR_NAVY
+        badge_high_text = COLOR_WHITE
+        badge_medium_bg = COLOR_TEAL_SOFT
+
     st.markdown(
         f"""
         <style>
@@ -96,10 +137,12 @@ def inject_global_styles() -> None:
             }}
 
             .main {{
-                background-color: {COLOR_BG};
+                background-color: {surface_bg};
             }}
 
-            /* ---------- Sidebar ---------- */
+            /* ---------- Sidebar ----------
+               Brand chrome - always navy, regardless of the content
+               area's light/dark mode setting. */
             section[data-testid="stSidebar"] {{
                 background-color: {COLOR_NAVY};
                 border-right: 1px solid {COLOR_BORDER};
@@ -171,14 +214,14 @@ def inject_global_styles() -> None:
 
             /* ---------- Page header ---------- */
             .gv-page-title {{
-                color: {COLOR_NAVY};
+                color: {text_primary};
                 font-size: {FONT_SIZE_PAGE_TITLE};
                 font-weight: 700;
                 margin-bottom: 0.1rem;
             }}
 
             .gv-page-subtitle {{
-                color: {COLOR_TEXT_MUTED};
+                color: {text_muted};
                 font-size: {FONT_SIZE_SUBTITLE};
                 margin-bottom: 1.5rem;
             }}
@@ -198,30 +241,41 @@ def inject_global_styles() -> None:
 
             /* ---------- Cards ---------- */
             .gv-card {{
-                background-color: {COLOR_WHITE};
-                border: 1px solid {COLOR_BORDER};
+                background-color: {card_bg};
+                border: 1px solid {card_border};
                 border-radius: {RADIUS_LG};
                 padding: {SPACING_LG};
                 box-shadow: 0 1px 2px rgba(11, 31, 58, 0.04);
             }}
 
             .gv-card h3 {{
-                color: {COLOR_NAVY};
+                color: {text_primary};
                 font-size: {FONT_SIZE_CARD_TITLE};
                 margin-top: 0;
             }}
 
             .gv-card p {{
-                color: {COLOR_TEXT_MUTED};
+                color: {text_muted};
+            }}
+
+            /* Same visual weight as .gv-card h3, for headings that
+               sit above a group of cards rather than inside one
+               (e.g. "Recommended Government Schemes" above a stack
+               of individual scheme cards). */
+            .gv-section-title {{
+                color: {text_primary};
+                font-size: {FONT_SIZE_CARD_TITLE};
+                font-weight: 700;
+                margin: 0 0 {SPACING_SM} 0;
             }}
 
             .gv-placeholder-card {{
-                background-color: {COLOR_WHITE};
-                border: 1.5px dashed {COLOR_BORDER};
+                background-color: {card_bg};
+                border: 1.5px dashed {card_border};
                 border-radius: {RADIUS_LG};
                 padding: {SPACING_XL} 2rem;
                 text-align: center;
-                color: {COLOR_TEXT_MUTED};
+                color: {text_muted};
             }}
 
             .gv-placeholder-card .gv-placeholder-icon {{
@@ -229,26 +283,42 @@ def inject_global_styles() -> None:
                 margin-bottom: {SPACING_SM};
             }}
 
-            /* ---------- Stat chips ---------- */
-            .gv-chip {{
-                background-color: {COLOR_TEAL_SOFT};
-                color: {COLOR_TEAL};
-                border-radius: {RADIUS_MD};
-                padding: 0.9rem {SPACING_MD};
-                text-align: center;
+            /* ---------- Field badges (priority, department) ----------
+               Priority is differentiated by fill *intensity* (navy ->
+               teal-soft -> outlined) rather than hue, deliberately
+               staying inside the existing navy/teal palette instead
+               of introducing a traffic-light color system. Fills
+               swap to dark-mode-appropriate equivalents above so
+               "High" still stands out against a dark card instead of
+               blending into it. */
+            .gv-badge {{
+                display: inline-block;
+                border-radius: {RADIUS_PILL};
+                padding: 0.25rem 0.75rem;
+                font-size: 0.78rem;
                 font-weight: 600;
             }}
 
-            .gv-chip .gv-chip-value {{
-                font-size: {FONT_SIZE_CHIP_VALUE};
-                color: {COLOR_NAVY};
-                display: block;
+            .gv-badge-priority-high {{
+                background-color: {badge_high_bg};
+                color: {badge_high_text};
             }}
 
-            .gv-chip .gv-chip-label {{
-                font-size: {FONT_SIZE_CHIP_LABEL};
-                color: {COLOR_TEXT_MUTED};
-                font-weight: 500;
+            .gv-badge-priority-medium {{
+                background-color: {badge_medium_bg};
+                color: {COLOR_TEAL};
+            }}
+
+            .gv-badge-priority-low {{
+                background-color: {card_bg};
+                color: {text_muted};
+                border: 1px solid {card_border};
+            }}
+
+            .gv-badge-department {{
+                background-color: {surface_bg};
+                color: {text_primary};
+                border: 1px solid {card_border};
             }}
 
             /* Hide default Streamlit chrome for a cleaner look */
@@ -294,3 +364,53 @@ def placeholder_card(icon: str, text: str) -> None:
         """,
         unsafe_allow_html=True,
     )
+
+
+_PRIORITY_BADGE_VARIANTS = {
+    "high": "gv-badge-priority-high",
+    "medium": "gv-badge-priority-medium",
+    "low": "gv-badge-priority-low",
+}
+
+
+def priority_badge_html(priority: str) -> str:
+    """
+    Builds a self-contained HTML `<span>` badge for a complaint
+    priority level, styled by severity (fill intensity, not hue - see
+    the `.gv-badge-priority-*` rules in `inject_global_styles()`).
+
+    Shared by every page that displays a complaint's priority
+    (`frontend/pages/file_complaint.py`,
+    `frontend/pages/track_complaint.py`) so the High/Medium/Low ->
+    CSS class mapping exists in exactly one place.
+
+    Args:
+        priority: Expected to be "High", "Medium", or "Low" (see
+            `ai/llm/prompts.py`), but any value is accepted - an
+            unrecognized value still renders, just with the neutral
+            "medium" styling rather than failing.
+
+    Returns:
+        An HTML string, safe to splice directly into an f-string
+        already marked `unsafe_allow_html=True` - the priority text
+        itself is escaped here.
+    """
+    variant = _PRIORITY_BADGE_VARIANTS.get(
+        str(priority).strip().lower(), "gv-badge-priority-medium"
+    )
+    return f'<span class="gv-badge {variant}">{html.escape(str(priority))}</span>'
+
+
+def department_badge_html(department: str) -> str:
+    """
+    Builds a self-contained HTML `<span>` badge for a department name.
+    Shared for the same reason as `priority_badge_html()` above.
+
+    Args:
+        department: The department name to display.
+
+    Returns:
+        An HTML string, safe to splice directly into an f-string
+        already marked `unsafe_allow_html=True`.
+    """
+    return f'<span class="gv-badge gv-badge-department">{html.escape(str(department))}</span>'

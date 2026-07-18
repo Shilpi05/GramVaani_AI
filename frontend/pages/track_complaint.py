@@ -43,7 +43,9 @@ from frontend.components.theme import (
     COLOR_TEAL_SOFT,
     COLOR_TEXT_MUTED,
     COLOR_WHITE,
+    department_badge_html,
     page_header,
+    priority_badge_html,
 )
 from frontend.config.constants import (
     TRACK_COMPLAINT_BUTTON_LABEL,
@@ -177,9 +179,9 @@ def _render_tracking_result(result: dict) -> None:
     """
     complaint_id = html.escape(str(result.get("complaint_id", "")))
     status = str(result.get("status", ""))
-    department = html.escape(str(result.get("department", "")))
+    department_badge = department_badge_html(result.get("department", ""))
     tracked_date = html.escape(str(result.get("date", "")))
-    priority = html.escape(str(result.get("priority", "")))
+    priority_badge = priority_badge_html(result.get("priority", ""))
 
     stepper_html = _build_status_stepper_html(status)
 
@@ -189,9 +191,9 @@ def _render_tracking_result(result: dict) -> None:
         f"<p><strong>Complaint ID:</strong> {complaint_id}</p>"
         f"{stepper_html}"
         f"<p><strong>{TRACK_COMPLAINT_STATUS_LABEL}:</strong> {html.escape(status)}</p>"
-        f"<p><strong>{TRACK_COMPLAINT_DEPARTMENT_LABEL}:</strong> {department}</p>"
+        f"<p><strong>{TRACK_COMPLAINT_DEPARTMENT_LABEL}:</strong> {department_badge}</p>"
         f"<p><strong>{TRACK_COMPLAINT_DATE_LABEL}:</strong> {tracked_date}</p>"
-        f"<p><strong>{TRACK_COMPLAINT_PRIORITY_LABEL}:</strong> {priority}</p>"
+        f"<p><strong>{TRACK_COMPLAINT_PRIORITY_LABEL}:</strong> {priority_badge}</p>"
         "</div>"
     )
 

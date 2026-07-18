@@ -28,10 +28,9 @@ import html
 
 import streamlit as st
 
-from frontend.components.theme import page_header
+from frontend.components.theme import department_badge_html, page_header
 from frontend.config.constants import (
     SCHEME_DEPARTMENT_LABEL,
-    SCHEME_DESCRIPTION_LABEL,
     SCHEME_ELIGIBILITY_LABEL,
     SCHEME_FINDER_CARD_TEXT,
     SCHEME_FINDER_CARD_TITLE,
@@ -40,7 +39,6 @@ from frontend.config.constants import (
     SCHEME_FINDER_EYEBROW,
     SCHEME_FINDER_SUBTITLE,
     SCHEME_FINDER_TITLE,
-    SCHEME_NAME_LABEL,
     SCHEME_RECOMMENDATION_CARD_TITLE,
 )
 from frontend.pages.file_complaint import SCHEMES_STATE_KEY
@@ -49,15 +47,11 @@ from frontend.utils.helpers import navigate_to
 
 def _render_schemes(schemes) -> None:
     """
-    Renders the recommended government schemes in a styled card.
-
-    Each scheme is rendered as:
-        ----------------------------------
-        Scheme Name
-        Description
-        Eligibility
-        Responsible Department
-        ----------------------------------
+    Renders the recommended government schemes, each as its own card
+    - matching the same card language used everywhere else in the
+    app (`.gv-card`, real `<h3>` titles, department badges), instead
+    of the dash-separated plain-text block this used before. This was
+    the last surface in the app still using that older format.
 
     If no matching schemes were found, a single explanatory line is
     shown instead of the scheme list.
@@ -67,45 +61,44 @@ def _render_schemes(schemes) -> None:
             fallback string, exactly as stored by
             `file_complaint._handle_generate_complaint()`.
     """
-    separator = "-" * 34
-
     if isinstance(schemes, str):
         # No matching category - schemes holds the fallback message.
-        body_html = f"<p>{html.escape(schemes)}</p>"
-    else:
-        entries = []
-        for scheme in schemes:
-            name = html.escape(str(scheme.get("name", "")))
-            description = html.escape(str(scheme.get("description", "")))
-            eligibility = html.escape(str(scheme.get("eligibility", "")))
-            official_department = html.escape(
-                str(scheme.get("official_department", ""))
-            )
-            # NOTE: deliberately built from <p> tags rather than a
-            # <pre> block. Streamlit applies its own low-contrast
-            # code-block styling to <pre>/<code> elements that this
-            # app's `.gv-card p` color rule does not override, which
-            # made earlier scheme text render almost invisibly on the
-            # white card background.
-            entries.append(
-                f"""<p>{separator}<br>
-                <strong>{SCHEME_NAME_LABEL}:</strong> {name}<br>
-                <strong>{SCHEME_DESCRIPTION_LABEL}:</strong> {description}<br>
-                <strong>{SCHEME_ELIGIBILITY_LABEL}:</strong> {eligibility}<br>
-                <strong>{SCHEME_DEPARTMENT_LABEL}:</strong> {official_department}<br>
-                {separator}</p>"""
-            )
-        body_html = "".join(entries)
+        st.markdown(
+            f"""
+            <div class="gv-card">
+                <h3>{SCHEME_RECOMMENDATION_CARD_TITLE}</h3>
+                <p>{html.escape(schemes)}</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        return
 
     st.markdown(
-        f"""
-        <div class="gv-card">
-            <h3>{SCHEME_RECOMMENDATION_CARD_TITLE}</h3>
-            {body_html}
-        </div>
-        """,
+        f"<h3 class='gv-section-title'>{SCHEME_RECOMMENDATION_CARD_TITLE}</h3>",
         unsafe_allow_html=True,
     )
+
+    for scheme in schemes:
+        name = html.escape(str(scheme.get("name", "")))
+        description = html.escape(str(scheme.get("description", "")))
+        eligibility = html.escape(str(scheme.get("eligibility", "")))
+        department_badge = department_badge_html(
+            scheme.get("official_department", "")
+        )
+
+        st.markdown(
+            f"""
+            <div class="gv-card gv-scheme-card">
+                <h3>🏛 {name}</h3>
+                <p>{description}</p>
+                <p><strong>{SCHEME_ELIGIBILITY_LABEL}:</strong> {eligibility}</p>
+                <p><strong>{SCHEME_DEPARTMENT_LABEL}:</strong> {department_badge}</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.write("")
 
 
 def _render_empty_state() -> None:
@@ -160,3 +153,4 @@ def render() -> None:
         _render_empty_state()
     else:
         _render_schemes(schemes)
+        
