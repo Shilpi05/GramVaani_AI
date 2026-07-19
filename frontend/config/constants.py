@@ -395,5 +395,64 @@ TRACK_COMPLAINT_PLACEHOLDER: str = "Complaint tracking timeline coming soon"
 # ----------------------------------------------------------------------
 SETTINGS_EYEBROW: str = "Preferences"
 SETTINGS_TITLE: str = "Settings"
-SETTINGS_SUBTITLE: str = "Application settings will appear here."
-SETTINGS_PLACEHOLDER: str = "Settings panel coming soon"
+SETTINGS_SUBTITLE: str = "Manage your preferences and session data."
+
+# --- Application Status (read-only) ---
+# Deliberately simple, citizen-facing status - not developer/debug
+# info (no model names, providers, or version numbers of internal
+# services). See ai/llm/complaint_generator.py and
+# ai/speech/speech_service.py for the actual configured models, which
+# stay internal implementation detail rather than being surfaced here.
+SETTINGS_APP_INFO_TITLE: str = "Application Status"
+SETTINGS_APP_NAME_LABEL: str = "Application"
+SETTINGS_VERSION_LABEL: str = "Version"
+SETTINGS_AI_ASSISTANCE_LABEL: str = "AI Assistance"
+SETTINGS_AI_ASSISTANCE_VALUE: str = "Enabled"
+SETTINGS_SPEECH_RECOGNITION_LABEL: str = "Speech Recognition"
+SETTINGS_SPEECH_RECOGNITION_VALUE: str = "Available"
+
+# --- User Preferences ---
+SETTINGS_PREFERENCES_TITLE: str = "Preferences"
+
+SETTINGS_LANGUAGE_LABEL: str = "Preferred Complaint Language"
+SETTINGS_LANGUAGE_HELP: str = (
+    "Sets the default selection on the File Complaint page's "
+    "language chooser. Ignored while Auto Detect is on."
+)
+
+SETTINGS_AUTO_DETECT_LABEL: str = "Auto Detect Language"
+SETTINGS_AUTO_DETECT_HELP: str = (
+    "When on, File Complaint always uses Auto Detect instead of your "
+    "preferred language above."
+)
+
+SETTINGS_AUTO_DELETE_LABEL: str = "Auto Delete Uploaded Files"
+SETTINGS_AUTO_DELETE_HELP: str = (
+    "When on, a previous evidence photo is deleted from disk as soon "
+    "as it's replaced with a new one."
+)
+
+# --- System ---
+SETTINGS_SYSTEM_TITLE: str = "System"
+
+SETTINGS_CLEAR_SESSION_BUTTON_LABEL: str = "🗑 Clear Session"
+SETTINGS_CLEAR_SESSION_HELP: str = (
+    "Clears this session's transcript, generated complaint, scheme "
+    "results, evidence photo, and tracking records. Preferences below "
+    "are not affected."
+)
+SETTINGS_CLEAR_SESSION_SUCCESS_MESSAGE: str = "Session data cleared."
+
+SETTINGS_RESTORE_DEFAULTS_BUTTON_LABEL: str = "↺ Restore Defaults"
+SETTINGS_RESTORE_DEFAULTS_HELP: str = (
+    "Resets Preferred Language, Auto Detect, and Auto Delete above "
+    "back to their original defaults."
+)
+SETTINGS_RESTORE_DEFAULTS_SUCCESS_MESSAGE: str = "Preferences restored to defaults."
+
+# Default preference values - used both as the fallback when a
+# preference has never been set, and as what "Restore Defaults" resets
+# back to.
+DEFAULT_COMPLAINT_LANGUAGE: str = LANGUAGE_OPTION_HINDI
+DEFAULT_AUTO_DETECT_LANGUAGE: bool = False
+DEFAULT_AUTO_DELETE_FILES: bool = True

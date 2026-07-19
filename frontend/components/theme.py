@@ -414,3 +414,27 @@ def department_badge_html(department: str) -> str:
         already marked `unsafe_allow_html=True`.
     """
     return f'<span class="gv-badge gv-badge-department">{html.escape(str(department))}</span>'
+
+
+def info_row_html(label: str, value: str) -> str:
+    """
+    Builds a single "label: value" row for a read-only info card
+    (e.g. the "Application Information" section on the Settings
+    page). Centralized here, rather than written inline per page, so
+    every such row shares identical spacing/typography.
+
+    Args:
+        label: The field name (e.g. "Version").
+        value: The field's current value (e.g. "v1.0").
+
+    Returns:
+        An HTML string, safe to splice directly into an f-string
+        already marked `unsafe_allow_html=True` - both label and
+        value are escaped here.
+    """
+    return (
+        '<p style="margin:0.35rem 0;">'
+        f"<strong>{html.escape(str(label))}:</strong> "
+        f"{html.escape(str(value))}"
+        "</p>"
+    )

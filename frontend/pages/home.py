@@ -182,6 +182,7 @@ _HOME_STYLE = (
     "}"
     ".gv-home-workflow-icon{"
     f"width:50px;height:50px;border-radius:999px;background-color:{COLOR_NAVY};"
+    f"color:{COLOR_WHITE};"
     "display:flex;align-items:center;justify-content:center;font-size:1.4rem;"
     "margin:0 auto 0.8rem auto;"
     "}"

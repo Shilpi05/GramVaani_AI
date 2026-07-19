@@ -19,3 +19,15 @@ backgroundColor = "#F7F9FB"
 secondaryBackgroundColor = "#FFFFFF"
 textColor = "#0B1F3A"
 font = "sans serif"
+
+[server]
+# Streamlit shows this number next to every file_uploader widget
+# ("200MB per file" by default) regardless of any app-level
+# validation. The evidence photo uploader enforces a 5MB cap in
+# frontend/components/evidence_uploader.py, but with no [server]
+# config the UI was still advertising 200MB - a citizen could select
+# a large photo, wait for the full upload to transfer, and only then
+# get rejected. 25MB keeps real voice complaint recordings (the
+# other uploader on this page) working exactly as before while
+# making the displayed cap honest instead of wildly oversized.
+maxUploadSize = 25
