@@ -40,8 +40,10 @@ Public API:
 import logging
 from datetime import date
 from io import BytesIO
-from typing import Any, Dict, List, Union
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
+from PIL import Image as PILImage
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import A4
@@ -49,6 +51,7 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
 from reportlab.platypus import (
     HRFlowable,
+    Image as RLImage,
     Paragraph,
     SimpleDocTemplate,
     Spacer,
@@ -81,6 +84,48 @@ _COLOR_TEXT_MUTED = colors.HexColor("#5C6B7A")
 _COLOR_BORDER = colors.HexColor("#E4E8EE")
 
 _NO_SCHEME_FOUND_MESSAGE = "No direct government scheme found."
+
+# ----------------------------------------------------------------------
+# Page geometry - mirrors the SimpleDocTemplate margins configured in
+# generate_complaint_pdf() below, used to fit the evidence image
+# within the printable content area.
+# ----------------------------------------------------------------------
+_PAGE_WIDTH, _PAGE_HEIGHT = A4
+_PAGE_MARGIN = 2.0 * cm
+_CONTENT_WIDTH = _PAGE_WIDTH - (2 * _PAGE_MARGIN)
+_MAX_EVIDENCE_IMAGE_HEIGHT = 10 * cm  # keeps a tall photo from dominating the report
+
+
+def _compute_fitted_image_size(image_path: str) -> "tuple[float, float]":
+    """
+    Computes a display size for the evidence image that preserves its
+    aspect ratio while fitting within the report's content width and
+    a maximum height, never upscaling a small image beyond its native
+    resolution.
+
+    Args:
+        image_path: Path to the image file on disk.
+
+    Returns:
+        A (width, height) tuple in reportlab points (both already
+        scaled by `cm` units used elsewhere in this module).
+
+    Raises:
+        Exception: If the file cannot be opened as an image - the
+            caller is responsible for handling this gracefully.
+    """
+    with PILImage.open(image_path) as img:
+        native_width, native_height = img.size
+
+    if native_width <= 0 or native_height <= 0:
+        return _CONTENT_WIDTH, _MAX_EVIDENCE_IMAGE_HEIGHT
+
+    scale = min(
+        _CONTENT_WIDTH / native_width,
+        _MAX_EVIDENCE_IMAGE_HEIGHT / native_height,
+        1.0,  # never upscale beyond the photo's native resolution
+    )
+    return native_width * scale, native_height * scale
 
 
 def _build_styles() -> Dict[str, ParagraphStyle]:
@@ -224,10 +269,13 @@ def _build_field_table(rows: List[List[str]], styles: Dict[str, ParagraphStyle])
 def generate_complaint_pdf(
     complaint: Dict[str, Any],
     schemes: Union[List[Dict[str, str]], str, None] = None,
+    evidence_image_path: Optional[str] = None,
+    evidence_filename: Optional[str] = None,
 ) -> bytes:
     """
     Renders a professionally formatted PDF report for a generated
-    complaint, including its recommended government schemes.
+    complaint, including its recommended government schemes and, if
+    provided, an attached evidence photo.
 
     Args:
         complaint: The complaint dict as produced by
@@ -241,6 +289,14 @@ def generate_complaint_pdf(
             "description", "eligibility", "official_department"), the
             literal string "No direct government scheme found.", or
             None if no scheme lookup was performed.
+        evidence_image_path: Path to a citizen-uploaded evidence photo
+            on disk (see `frontend/components/evidence_uploader.py`),
+            or None if no photo was attached. When None, or when the
+            path doesn't exist, the "Evidence Attached" section is
+            omitted from the report entirely - it never appears empty.
+        evidence_filename: The evidence photo's original filename, to
+            display alongside it. Falls back to the path's own
+            filename if not given.
 
     Returns:
         The PDF file content as raw bytes, ready to be offered for
@@ -332,6 +388,31 @@ def generate_complaint_pdf(
                 HRFlowable(
                     width="100%", thickness=0.4, color=_COLOR_BORDER, spaceBefore=8
                 )
+            )
+
+    # --- Evidence Attached (only if a photo was actually provided) ---
+    if evidence_image_path and Path(evidence_image_path).exists():
+        story.append(Paragraph("Evidence Attached", styles["SectionHeading"]))
+        story.append(
+            HRFlowable(width="100%", thickness=0.6, color=_COLOR_BORDER, spaceAfter=6)
+        )
+        display_name = evidence_filename or Path(evidence_image_path).name
+        story.append(Paragraph(_escape(display_name), styles["FieldValue"]))
+        story.append(Spacer(1, 0.3 * cm))
+        try:
+            fitted_width, fitted_height = _compute_fitted_image_size(
+                evidence_image_path
+            )
+            story.append(
+                RLImage(evidence_image_path, width=fitted_width, height=fitted_height)
+            )
+        except Exception as exc:  # noqa: BLE001
+            # Never let a corrupt/unreadable image file take down PDF
+            # generation - degrade to just the filename noted above.
+            logger.warning(
+                "Could not embed evidence image '%s' in PDF: %s",
+                evidence_image_path,
+                exc,
             )
 
     # --- Footer ---

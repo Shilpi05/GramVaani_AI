@@ -45,8 +45,9 @@ This page implements six AI/utility features end-to-end:
         14. A "Download Complaint" button renders a professionally
             formatted PDF (via `reportlab`) containing the Complaint
             ID, date, type, department, priority, summary, formal
-            complaint, and recommended schemes - built entirely
-            offline, no external calls
+            complaint, recommended schemes, and - if one was
+            attached - the evidence photo, embedded near the end of
+            the report. Built entirely offline, no external calls.
 
     Complaint Tracking Registration (ai/utils/complaint_tracker.py):
         15. Every generated complaint is registered into a mock,
@@ -54,8 +55,17 @@ This page implements six AI/utility features end-to-end:
             authentication) so its status can later be looked up by
             Complaint ID on the "Track Complaint" page
 
+    Evidence Photo Upload (frontend/components/evidence_uploader.py):
+        16. A citizen may optionally attach one photo (jpg/jpeg/png)
+            as supporting evidence, saved for this session only. No
+            image AI/classification is performed on it - a note that
+            evidence was attached is shown once a complaint is
+            generated, and the photo is embedded in the downloaded
+            PDF (see #14). If "Auto Delete Uploaded Files" is enabled
+            on the Settings page, the photo is deleted from disk right
+            after the citizen clicks "Download Complaint".
+
 FUTURE INTEGRATION NOTE:
-    - An image uploader -> sent to `ai/vision` for image classification
     - Translation, department routing automation, etc. are OUT OF
       SCOPE for this page today and are intentionally not wired in.
 """
@@ -78,6 +88,7 @@ from ai.utils.complaint_tracker import register_complaint
 from ai.utils.pdf_generator import generate_complaint_pdf
 from frontend.components.evidence_uploader import (
     EVIDENCE_STATE_KEY,
+    delete_evidence_image,
     render_evidence_upload_section,
 )
 from frontend.components.theme import (
@@ -356,27 +367,57 @@ def _render_complaint_result_if_available() -> None:
     )
 
 
+def _handle_pdf_downloaded() -> None:
+    """
+    `st.download_button`'s `on_click` callback - fires exactly when
+    the citizen actually clicks the download button (unlike the PDF
+    bytes themselves, which are rebuilt on every rerun regardless of
+    whether the button was clicked). This is deliberately the moment
+    "Auto Delete Uploaded Files" acts on the evidence photo, since the
+    PDF the citizen is about to receive already has the image embedded
+    - deleting it now can never affect that download.
+    """
+    if not st.session_state.get("gv_auto_delete_files", True):
+        return
+
+    evidence = st.session_state.get(EVIDENCE_STATE_KEY)
+    if not evidence:
+        return
+
+    delete_evidence_image(evidence.get("path"))
+    st.session_state[EVIDENCE_STATE_KEY] = None
+    st.session_state.pop("gv_evidence_uploader", None)
+
+
 def _render_download_button_if_available() -> None:
     """
     Renders a "Download Complaint" button that generates a
     professionally formatted PDF (via `ai/utils/pdf_generator.py`)
-    from the currently generated complaint and its recommended
-    schemes, if a complaint has been generated.
+    from the currently generated complaint, its recommended schemes,
+    and its evidence photo (if any), if a complaint has been generated.
 
     The PDF is (re)built on every rerun from session state - cheap
     and deterministic - rather than cached, so it always reflects the
-    latest complaint/schemes in view. A PDF generation failure is
-    logged and shown as a friendly error; it never breaks the rest of
-    the page.
+    latest complaint/schemes/evidence in view. A PDF generation
+    failure is logged and shown as a friendly error; it never breaks
+    the rest of the page.
     """
     complaint = st.session_state.get(_COMPLAINT_STATE_KEY)
     if not complaint:
         return
 
     schemes = st.session_state.get(SCHEMES_STATE_KEY)
+    evidence = st.session_state.get(EVIDENCE_STATE_KEY)
+    evidence_image_path = evidence.get("path") if evidence else None
+    evidence_filename = evidence.get("filename") if evidence else None
 
     try:
-        pdf_bytes = generate_complaint_pdf(complaint, schemes)
+        pdf_bytes = generate_complaint_pdf(
+            complaint,
+            schemes,
+            evidence_image_path=evidence_image_path,
+            evidence_filename=evidence_filename,
+        )
     except Exception:  # noqa: BLE001
         print(traceback.format_exc())
         st.error(PDF_GENERATION_FAILED_ERROR)
@@ -393,6 +434,7 @@ def _render_download_button_if_available() -> None:
         mime="application/pdf",
         use_container_width=True,
         type="primary",
+        on_click=_handle_pdf_downloaded,
         key="gv_download_complaint_pdf",
     )
 
