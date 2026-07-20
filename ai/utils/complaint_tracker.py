@@ -143,7 +143,8 @@ def get_tracking_info(
 ) -> Optional[Dict[str, str]]:
     """
     Looks up a complaint by ID and returns its current tracking
-    status alongside its department, date, and priority.
+    status alongside its department, date, priority, and raw
+    registration timestamp.
 
     Args:
         registry: The dict backing the tracker (expected to be
@@ -154,8 +155,14 @@ def get_tracking_info(
 
     Returns:
         A dict with keys "complaint_id", "status", "department",
-        "date", "priority", "complaint_type" if found, or None if no
-        complaint with that ID has been registered in this session.
+        "date", "priority", "complaint_type", "generated_at" if
+        found, or None if no complaint with that ID has been
+        registered in this session. "generated_at" is the raw
+        ISO-8601 string already stored by `register_complaint()` -
+        exposed here (previously computed internally but not
+        returned) purely so callers can derive presentational detail
+        such as per-stage timestamps; it does not change how status
+        is computed.
     """
     normalized_id = complaint_id.strip()
     record = registry.get(normalized_id)
@@ -178,4 +185,5 @@ def get_tracking_info(
         "date": record.get("generated_date", ""),
         "priority": record.get("priority", ""),
         "complaint_type": record.get("complaint_type", ""),
+        "generated_at": record.get("generated_at", ""),
     }

@@ -60,6 +60,17 @@ COLOR_DARK_CARD: str = "#13233C"
 COLOR_DARK_BORDER: str = "#24384F"
 COLOR_DARK_BADGE_MEDIUM_BG: str = "#1C3350"
 
+# Success tokens - used narrowly for the "Resolved" state on the Track
+# Complaint page (resolved status badge, final timeline marker, the
+# "Resolved Successfully" confirmation banner). Every other status in
+# the app stays inside the navy/teal palette; a small, deliberate
+# green accent is added only for this one terminal, positive state,
+# which is a common and easily-recognized convention on government
+# status-tracking portals.
+COLOR_SUCCESS: str = "#1E8E5A"
+COLOR_SUCCESS_SOFT: str = "#E7F6EE"
+COLOR_DARK_SUCCESS_SOFT: str = "#123524"
+
 # ----------------------------------------------------------------------
 # Typography constants
 # ----------------------------------------------------------------------
@@ -118,6 +129,7 @@ def inject_global_styles(dark_mode: bool = False) -> None:
         badge_high_bg = COLOR_TEAL
         badge_high_text = COLOR_DARK_BG
         badge_medium_bg = COLOR_DARK_BADGE_MEDIUM_BG
+        success_soft_bg = COLOR_DARK_SUCCESS_SOFT
     else:
         surface_bg = COLOR_BG
         card_bg = COLOR_WHITE
@@ -127,6 +139,7 @@ def inject_global_styles(dark_mode: bool = False) -> None:
         badge_high_bg = COLOR_NAVY
         badge_high_text = COLOR_WHITE
         badge_medium_bg = COLOR_TEAL_SOFT
+        success_soft_bg = COLOR_SUCCESS_SOFT
 
     st.markdown(
         f"""
@@ -321,6 +334,241 @@ def inject_global_styles(dark_mode: bool = False) -> None:
                 border: 1px solid {card_border};
             }}
 
+            /* ---------- Status badge (Current Status field) ----------
+               Same pill shape as .gv-badge, but colored per pipeline
+               stage instead of per priority. Stays in the navy/teal
+               palette for every stage except the terminal "Resolved"
+               state, which uses the small success accent above. */
+            .gv-status-badge {{
+                display: inline-flex;
+                align-items: center;
+                gap: 0.4rem;
+                border-radius: {RADIUS_PILL};
+                padding: 0.3rem 0.85rem;
+                font-size: 0.8rem;
+                font-weight: 700;
+            }}
+
+            .gv-status-badge-dot {{
+                width: 7px;
+                height: 7px;
+                border-radius: {RADIUS_PILL};
+                background-color: currentColor;
+                flex-shrink: 0;
+            }}
+
+            .gv-status-badge-submitted {{
+                background-color: {surface_bg};
+                color: {text_muted};
+                border: 1px solid {card_border};
+            }}
+
+            .gv-status-badge-under-review {{
+                background-color: {badge_medium_bg};
+                color: {COLOR_TEAL};
+            }}
+
+            .gv-status-badge-assigned {{
+                background-color: {COLOR_NAVY};
+                color: {COLOR_WHITE};
+            }}
+
+            .gv-status-badge-resolved {{
+                background-color: {success_soft_bg};
+                color: {COLOR_SUCCESS};
+            }}
+
+            /* ---------- Status timeline (Track Complaint) ----------
+               A vertical timeline: each stage shows its label plus
+               (once reached) the date/time it was reached, connected
+               by a downward arrow - closer to how a real grievance
+               portal lays out a complaint's history than a row of
+               bare circles. The current stage gets a teal-highlighted
+               label and marker plus a small "Current Stage" tag
+               (reusing .gv-eyebrow's existing teal-soft pill styling
+               below, not a new color) so it's unambiguous at a
+               glance which stage the complaint is in right now. */
+            .gv-vtimeline {{
+                display: flex;
+                flex-direction: column;
+                margin: 1.1rem 0 0.25rem 0;
+            }}
+
+            .gv-vtimeline-row {{
+                display: flex;
+                align-items: center;
+                gap: 0.65rem;
+            }}
+
+            .gv-vtimeline-marker {{
+                width: 15px;
+                height: 15px;
+                border-radius: {RADIUS_PILL};
+                flex-shrink: 0;
+            }}
+
+            .gv-vtimeline-item-done .gv-vtimeline-marker {{
+                background-color: {COLOR_TEAL};
+            }}
+
+            .gv-vtimeline-item-done-final .gv-vtimeline-marker {{
+                background-color: {COLOR_SUCCESS};
+            }}
+
+            .gv-vtimeline-item-current .gv-vtimeline-marker {{
+                background-color: {card_bg};
+                border: 3px solid {COLOR_TEAL};
+                box-shadow: 0 0 0 4px {COLOR_TEAL_SOFT};
+            }}
+
+            .gv-vtimeline-item-upcoming .gv-vtimeline-marker {{
+                background-color: {card_bg};
+                border: 1.5px solid {card_border};
+            }}
+
+            .gv-vtimeline-label {{
+                font-size: 0.95rem;
+                font-weight: 700;
+            }}
+
+            .gv-vtimeline-item-done .gv-vtimeline-label,
+            .gv-vtimeline-item-done-final .gv-vtimeline-label {{
+                color: {text_primary};
+            }}
+
+            .gv-vtimeline-item-current .gv-vtimeline-label {{
+                color: {COLOR_TEAL};
+            }}
+
+            .gv-vtimeline-item-upcoming .gv-vtimeline-label {{
+                color: {text_muted};
+                font-weight: 600;
+            }}
+
+            .gv-vtimeline-current-tag {{
+                display: inline-block;
+                background-color: {COLOR_TEAL_SOFT};
+                color: {COLOR_TEAL};
+                font-size: 0.68rem;
+                font-weight: 700;
+                letter-spacing: 0.3px;
+                text-transform: uppercase;
+                padding: 0.12rem 0.55rem;
+                border-radius: {RADIUS_PILL};
+                margin-left: 0.5rem;
+            }}
+
+            .gv-vtimeline-timestamp {{
+                font-size: 0.8rem;
+                color: {text_muted};
+                margin: 0.15rem 0 0 1.75rem;
+            }}
+
+            .gv-vtimeline-connector {{
+                color: {card_border};
+                font-size: 1.05rem;
+                line-height: 1;
+                margin: 0.3rem 0 0.3rem 6px;
+            }}
+
+            .gv-vtimeline-connector-done {{
+                color: {COLOR_TEAL};
+            }}
+
+            /* ---------- Info grid (Complaint ID, Submission Date, ... ---------- */
+            .gv-info-grid {{
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+                gap: 0.85rem;
+                margin-top: 1.1rem;
+            }}
+
+            .gv-info-item {{
+                background-color: {surface_bg};
+                border: 1px solid {card_border};
+                border-radius: {RADIUS_SM};
+                padding: 0.7rem 0.9rem;
+            }}
+
+            .gv-info-label {{
+                font-size: 0.7rem;
+                text-transform: uppercase;
+                letter-spacing: 0.4px;
+                color: {text_muted};
+                font-weight: 700;
+                margin-bottom: 0.3rem;
+            }}
+
+            .gv-info-value {{
+                font-size: 0.95rem;
+                color: {text_primary};
+                font-weight: 600;
+            }}
+
+            .gv-info-value-sub {{
+                font-size: 0.78rem;
+                color: {text_muted};
+                font-weight: 600;
+                margin-top: 0.15rem;
+            }}
+
+            /* ---------- Resolved-Successfully confirmation banner ---------- */
+            .gv-resolved-banner {{
+                display: flex;
+                align-items: flex-start;
+                gap: 0.85rem;
+                background-color: {success_soft_bg};
+                border: 1px solid {COLOR_SUCCESS};
+                border-radius: {RADIUS_LG};
+                padding: 1rem 1.15rem;
+                margin: 1.1rem 0 0.25rem 0;
+            }}
+
+            .gv-resolved-banner-icon {{
+                font-size: 1.5rem;
+                line-height: 1.4;
+            }}
+
+            .gv-resolved-banner-title {{
+                color: {COLOR_SUCCESS};
+                font-weight: 700;
+                font-size: 1.02rem;
+            }}
+
+            .gv-resolved-banner-text {{
+                color: {text_muted};
+                font-size: 0.83rem;
+                margin-top: 0.15rem;
+            }}
+
+            /* ---------- Empty state (invalid / not-found Complaint ID) ---------- */
+            .gv-empty-state {{
+                background-color: {card_bg};
+                border: 1.5px dashed {card_border};
+                border-radius: {RADIUS_LG};
+                padding: 2.5rem 2rem;
+                text-align: center;
+            }}
+
+            .gv-empty-state-icon {{
+                font-size: 2.3rem;
+                margin-bottom: 0.6rem;
+            }}
+
+            .gv-empty-state-title {{
+                color: {text_primary};
+                font-weight: 700;
+                font-size: 1.1rem;
+                margin-bottom: 0.4rem;
+            }}
+
+            .gv-empty-state-text {{
+                color: {text_muted};
+                font-size: 0.88rem;
+                max-width: 440px;
+                margin: 0 auto;
+            }}
+
             /* Hide default Streamlit chrome for a cleaner look */
             #MainMenu {{visibility: hidden;}}
             footer {{visibility: hidden;}}
@@ -437,4 +685,93 @@ def info_row_html(label: str, value: str) -> str:
         f"<strong>{html.escape(str(label))}:</strong> "
         f"{html.escape(str(value))}"
         "</p>"
+    )
+
+
+_STATUS_BADGE_VARIANTS = {
+    "submitted": "gv-status-badge-submitted",
+    "under review": "gv-status-badge-under-review",
+    "assigned": "gv-status-badge-assigned",
+    "resolved": "gv-status-badge-resolved",
+}
+
+
+def status_badge_html(status: str) -> str:
+    """
+    Builds a self-contained HTML `<span>` badge for a complaint's
+    current pipeline status (Submitted / Under Review / Assigned /
+    Resolved), colored per stage - the same "existing design system"
+    pattern as `priority_badge_html()`, just keyed on status instead
+    of priority. Used by the Track Complaint page's "Current Status"
+    field.
+
+    Args:
+        status: Expected to be one of
+            `ai.utils.complaint_tracker.STATUS_STAGES`, but any value
+            is accepted - an unrecognized value still renders, with
+            the neutral "submitted" styling.
+
+    Returns:
+        An HTML string, safe to splice directly into an f-string
+        already marked `unsafe_allow_html=True` - the status text
+        itself is escaped here.
+    """
+    variant = _STATUS_BADGE_VARIANTS.get(
+        str(status).strip().lower(), "gv-status-badge-submitted"
+    )
+    return (
+        f'<span class="gv-status-badge {variant}">'
+        '<span class="gv-status-badge-dot"></span>'
+        f"{html.escape(str(status))}</span>"
+    )
+
+
+def resolved_banner_html(confirmation_text: str) -> str:
+    """
+    Builds the "Resolved Successfully" confirmation banner shown on
+    the Track Complaint page once a complaint's status reaches the
+    final stage.
+
+    Args:
+        confirmation_text: Short supporting line shown under the
+            title (e.g. a completion timestamp). Already expected to
+            be plain text - it is escaped here.
+
+    Returns:
+        An HTML string, safe to splice directly into an f-string
+        already marked `unsafe_allow_html=True`.
+    """
+    return (
+        '<div class="gv-resolved-banner">'
+        '<div class="gv-resolved-banner-icon">&#9989;</div>'
+        "<div>"
+        '<div class="gv-resolved-banner-title">Resolved Successfully</div>'
+        f'<div class="gv-resolved-banner-text">{html.escape(confirmation_text)}</div>'
+        "</div>"
+        "</div>"
+    )
+
+
+def render_empty_state(icon: str, title: str, text: str) -> None:
+    """
+    Renders a professional empty-state card - used in place of a
+    plain warning/error string when, for example, a Complaint ID
+    doesn't match any tracked complaint. Visually distinct from
+    `placeholder_card()` (which marks "not built yet" modules): this
+    one signals "nothing found for your input", not "coming soon".
+
+    Args:
+        icon: A single emoji illustrating the empty state.
+        title: Short heading (e.g. "Complaint Not Found").
+        text: Supporting explanation shown under the title.
+    """
+    st.markdown(
+        f"""
+        <div class="gv-empty-state">
+            <div class="gv-empty-state-icon">{icon}</div>
+            <div class="gv-empty-state-title">{html.escape(title)}</div>
+            <div class="gv-empty-state-text">{html.escape(text)}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )

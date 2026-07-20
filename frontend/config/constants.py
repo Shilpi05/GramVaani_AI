@@ -382,10 +382,35 @@ TRACK_COMPLAINT_NOT_FOUND_WARNING: str = (
 )
 
 TRACK_COMPLAINT_RESULT_CARD_TITLE: str = "📦 Complaint Status"
-TRACK_COMPLAINT_STATUS_LABEL: str = "Status"
+TRACK_COMPLAINT_COMPLAINT_ID_LABEL: str = "Complaint ID"
+TRACK_COMPLAINT_STATUS_LABEL: str = "Current Status"
 TRACK_COMPLAINT_DEPARTMENT_LABEL: str = "Department"
-TRACK_COMPLAINT_DATE_LABEL: str = "Date"
+TRACK_COMPLAINT_DATE_LABEL: str = "Submission Date"
 TRACK_COMPLAINT_PRIORITY_LABEL: str = "Priority"
+TRACK_COMPLAINT_ESTIMATED_RESOLUTION_LABEL: str = "Estimated Resolution Time"
+TRACK_COMPLAINT_LAST_UPDATED_LABEL: str = "Last Updated"
+
+TRACK_COMPLAINT_NOT_FOUND_ICON: str = "🔍"
+TRACK_COMPLAINT_NOT_FOUND_TITLE: str = "Complaint Not Found"
+TRACK_COMPLAINT_EMPTY_ID_ICON: str = "🪪"
+TRACK_COMPLAINT_EMPTY_ID_TITLE: str = "Enter a Complaint ID"
+
+TRACK_COMPLAINT_TIMELINE_CARD_TITLE: str = "🕒 Complaint Timeline"
+TRACK_COMPLAINT_CURRENT_STAGE_TAG: str = "Current Stage"
+
+TRACK_COMPLAINT_REMARKS_CARD_TITLE: str = "🗒️ Officer Remarks"
+
+TRACK_COMPLAINT_CONTACT_CARD_TITLE: str = "🏢 Department Contact"
+TRACK_COMPLAINT_CONTACT_DEPARTMENT_LABEL: str = "Responsible Department"
+TRACK_COMPLAINT_CONTACT_OFFICER_LABEL: str = "Officer"
+TRACK_COMPLAINT_CONTACT_PHONE_LABEL: str = "Phone"
+TRACK_COMPLAINT_CONTACT_EMAIL_LABEL: str = "Email"
+TRACK_COMPLAINT_CONTACT_MOCK_NOTE: str = (
+    "This is mock contact information for demo purposes and does not "
+    "represent a real government office."
+)
+
+TRACK_COMPLAINT_PROGRESS_CARD_TITLE: str = "📊 Complaint Progress"
 
 TRACK_COMPLAINT_PLACEHOLDER: str = "Complaint tracking timeline coming soon"
 
