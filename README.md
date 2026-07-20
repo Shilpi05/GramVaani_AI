@@ -10,6 +10,9 @@ photos, discover government schemes, and track complaint status.
 > external APIs are wired in yet. This repository is structured so
 > those pieces can be added later without restructuring.
 
+## 🌐 Live Demo
+
+https://gramvaani-ai.streamlit.app/
 ---
 
 ## 1. Project Overview
