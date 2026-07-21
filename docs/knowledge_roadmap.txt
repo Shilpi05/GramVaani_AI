@@ -1,0 +1,98 @@
+Knowledge You Need
+
+Level 1 (Must Learn)
+These are absolutely necessary.
+
+1. LLM Basics
+Know:
+- Tokens
+- Prompt
+- System Prompt
+- Context Window
+- Temperature
+- Hallucination
+Time: 2 hours
+
+2. Prompt Engineering
+Know:
+- System Prompt
+- User Prompt
+- Few-shot
+- Chain of Thought
+- Role Prompting
+- Guardrails
+Time: 2 hours
+
+3. REST APIs
+Understand:
+- GET
+- POST
+- JSON
+- Headers
+- Authentication
+- API Keys
+Time: 3 hours
+
+4. Streamlit
+Must know:
+- Button
+- Textbox
+- File Upload
+- Image Upload
+- Audio Upload
+- Session State
+- Navigation
+Time: 4 hours
+
+5. Python
+You already know enough.
+Just revise:
+- Functions
+- Classes
+- JSON
+- Requests
+- Async (optional)
+
+
+Level 2 (Needed for This Project)
+
+Speech Recognition
+Understand:
+  Audio
+    ↓
+   Text
+Options:
+- OpenAI Whisper
+- Bhashini
+- Sarvam AI
+
+Translation
+Understand:
+  Hindi → English → LLM → Hindi
+
+Vision Model
+Understand:
+  Image → Describe image → Classify → Department
+
+OCR
+Sometimes:
+  Photo → Text
+Useful later.
+
+Vector Database
+Understand:
+  PDF → Chunks → Embeddings → Search
+Not difficult.
+
+
+Level 3 (Advanced)
+Only after MVP works.
+
+- CrewAI
+- LangGraph
+- Multi-agent
+- RAG
+- Memory
+- Evaluation
+- Offline Models
+

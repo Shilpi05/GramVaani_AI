@@ -11,13 +11,22 @@ panel:
        versions are shown here - see `ai/llm/complaint_generator.py`
        and `ai/speech/speech_service.py` for that configuration; it
        stays internal implementation detail.
-    2. Preferences - Preferred Complaint Language, Auto Detect
+    2. Preferences - Application Language, Preferred Complaint
        Language, and Auto Delete Uploaded Files. All are plain
        `st.session_state` values; there is no database. Some of these
        keys are also read by *other* pages:
+         - "gv_app_language" -> owned by `frontend/utils/i18n.py`
+           (via `get_language()`/`set_language()`); this is the
+           interface language, separate from the complaint language
+           below. No page reads translated text through it yet - that
+           lands in a later pass - but the preference itself is real
+           and already takes effect immediately (Streamlit reruns the
+           whole script on every widget change).
          - "gv_complaint_language" -> the exact widget key
            `frontend/pages/file_complaint.py`'s language radio uses,
-           so setting it here changes that radio's default.
+           so setting it here changes that radio's default. "Auto
+           Detect" is one of its own selectable options, so no
+           separate toggle is needed for it.
          - "gv_auto_delete_files" -> read by
            `frontend/components/evidence_uploader.py` before
            replacing a previous evidence photo.
@@ -47,10 +56,8 @@ from frontend.config.constants import (
     APP_NAME,
     APP_VERSION,
     DEFAULT_AUTO_DELETE_FILES,
-    DEFAULT_AUTO_DETECT_LANGUAGE,
     DEFAULT_COMPLAINT_LANGUAGE,
     DEFAULT_DARK_MODE,
-    LANGUAGE_OPTION_AUTO,
     LANGUAGE_OPTIONS,
     SETTINGS_AI_ASSISTANCE_LABEL,
     SETTINGS_AI_ASSISTANCE_VALUE,
@@ -58,8 +65,6 @@ from frontend.config.constants import (
     SETTINGS_APP_NAME_LABEL,
     SETTINGS_AUTO_DELETE_HELP,
     SETTINGS_AUTO_DELETE_LABEL,
-    SETTINGS_AUTO_DETECT_HELP,
-    SETTINGS_AUTO_DETECT_LABEL,
     SETTINGS_CLEAR_SESSION_BUTTON_LABEL,
     SETTINGS_CLEAR_SESSION_HELP,
     SETTINGS_CLEAR_SESSION_SUCCESS_MESSAGE,
@@ -77,6 +82,27 @@ from frontend.config.constants import (
     SETTINGS_TITLE,
     SETTINGS_VERSION_LABEL,
 )
+from frontend.utils.i18n import DEFAULT_LANGUAGE, get_language, set_language
+
+# Application Language option labels. Kept local to this page rather
+# than added to frontend/config/constants.py: this task is scoped to
+# settings.py only, and every other page already imports its own copy
+# from constants.py, so nothing here is duplicated - it's simply not
+# centralized yet. A later pass that wires other pages up to
+# frontend/utils/i18n.py's t() helper is the natural point to move
+# this alongside everything else.
+#
+# Each language's own name for itself, shown as this selector's
+# options - deliberately NOT translated relative to whichever
+# language is currently active (a language picker conventionally
+# shows every option in its own native name: "English" is always
+# "English", never "अंग्रेज़ी", even while viewing the Hindi UI).
+_APP_LANGUAGE_LABEL = "Application Language"
+_APP_LANGUAGE_HELP = (
+    "Changes the language of the app's own interface - menus, labels, and messages."
+)
+_APP_LANGUAGE_NATIVE_NAMES = {"en": "English", "hi": "हिन्दी"}
+_APP_LANGUAGE_OPTIONS = list(_APP_LANGUAGE_NATIVE_NAMES.keys())
 
 # Session-state keys owned by *other* pages/components, needed here
 # only so "Clear Session" can reset a citizen's in-progress workflow.
@@ -169,8 +195,8 @@ def _render_app_status_card() -> None:
 
 def _render_preferences_card() -> None:
     """
-    Renders the "Preferences" card: Preferred Complaint Language,
-    Auto Detect Language, and Auto Delete Uploaded Files. Each control
+    Renders the "Preferences" card: Application Language, Preferred
+    Complaint Language, and Auto Delete Uploaded Files. Each control
     reads its current value from session state (falling back to the
     documented default) and writes any change straight back to the
     exact session-state key the rest of the app reads.
@@ -180,19 +206,34 @@ def _render_preferences_card() -> None:
         unsafe_allow_html=True,
     )
 
-    # --- Auto Detect Language (checked first: it determines whether
-    # the preferred-language selectbox below is editable) ---
-    auto_detect = st.checkbox(
-        SETTINGS_AUTO_DETECT_LABEL,
-        value=st.session_state.get(
-            "gv_auto_detect_language", DEFAULT_AUTO_DETECT_LANGUAGE
-        ),
-        help=SETTINGS_AUTO_DETECT_HELP,
-        key="gv_auto_detect_checkbox",
+    # --- Application Language (frontend/utils/i18n.py) ---
+    # This is the interface language - separate from "Preferred
+    # Complaint Language" below, which only sets Whisper's default.
+    # Changing it writes straight to st.session_state via
+    # set_language(), then explicitly reruns: Streamlit already
+    # reruns on every widget interaction, but doing this explicitly
+    # (the same pattern frontend/utils/helpers.py's navigate_to()
+    # already uses elsewhere) makes the immediate-effect requirement
+    # unambiguous rather than relying on that implicit behavior.
+    current_app_language = get_language()
+    if current_app_language not in _APP_LANGUAGE_OPTIONS:
+        current_app_language = DEFAULT_LANGUAGE
+
+    selected_app_language = st.selectbox(
+        _APP_LANGUAGE_LABEL,
+        options=_APP_LANGUAGE_OPTIONS,
+        index=_APP_LANGUAGE_OPTIONS.index(current_app_language),
+        format_func=lambda code: _APP_LANGUAGE_NATIVE_NAMES.get(code, code),
+        help=_APP_LANGUAGE_HELP,
+        key="gv_app_language_select",
     )
-    st.session_state["gv_auto_detect_language"] = auto_detect
+    if selected_app_language != current_app_language:
+        set_language(selected_app_language)
+        st.rerun()
 
     # --- Preferred Complaint Language ---
+    # "Auto Detect" is one of LANGUAGE_OPTIONS' own selectable values
+    # (not a separate toggle), so this selectbox alone covers it.
     current_language = st.session_state.get(
         "gv_complaint_language", DEFAULT_COMPLAINT_LANGUAGE
     )
@@ -203,14 +244,9 @@ def _render_preferences_card() -> None:
         options=LANGUAGE_OPTIONS,
         index=LANGUAGE_OPTIONS.index(current_language),
         help=SETTINGS_LANGUAGE_HELP,
-        disabled=auto_detect,
         key="gv_preferred_language_select",
     )
-    # While auto-detect is on, it - not the selectbox above - decides
-    # the effective language File Complaint's radio will default to.
-    st.session_state["gv_complaint_language"] = (
-        LANGUAGE_OPTION_AUTO if auto_detect else selected_language
-    )
+    st.session_state["gv_complaint_language"] = selected_language
 
     # --- Auto Delete Uploaded Files ---
     auto_delete = st.checkbox(
@@ -281,16 +317,16 @@ def _handle_restore_defaults() -> None:
     is meant to render with exactly one fixed design system.
     """
     st.session_state["gv_dark_mode"] = DEFAULT_DARK_MODE
+    set_language(DEFAULT_LANGUAGE)
     st.session_state["gv_complaint_language"] = DEFAULT_COMPLAINT_LANGUAGE
-    st.session_state["gv_auto_detect_language"] = DEFAULT_AUTO_DETECT_LANGUAGE
     st.session_state["gv_auto_delete_files"] = DEFAULT_AUTO_DELETE_FILES
 
     # The widgets above hold their own display state under separate
     # keys - pop those too so they re-read the just-restored values
     # instead of showing what was on screen a moment ago.
     for widget_key in (
+        "gv_app_language_select",
         "gv_preferred_language_select",
-        "gv_auto_detect_checkbox",
         "gv_auto_delete_checkbox",
     ):
         st.session_state.pop(widget_key, None)
