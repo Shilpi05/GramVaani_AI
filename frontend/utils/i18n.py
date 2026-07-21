@@ -110,12 +110,44 @@ def t(key: str) -> Any:
 # ----------------------------------------------------------------------
 # Translation tables
 # ----------------------------------------------------------------------
-# One dict per supported language. Intentionally empty for now (see
-# module docstring) - populated in a later pass, at which point every
-# key present in "en" must also be present in "hi", and vice versa, so
-# `t()` never has to silently fall back mid-page.
+# One dict per supported language. Every key present in "en" must
+# also be present in "hi", and vice versa, so `t()` never has to
+# silently fall back mid-page.
+#
+# Populated so far: the navigation system only (sidebar nav labels,
+# the app title, and the tagline) - see `frontend/components/sidebar.py`,
+# the only file currently calling `t()`. Page content (Home, File
+# Complaint, Scheme Finder, Track Complaint, Settings) is still
+# entirely in English and untouched by this module; that's a later
+# pass, not an oversight.
 # ----------------------------------------------------------------------
 TRANSLATIONS: dict = {
-    "en": {},
-    "hi": {},
+    "en": {
+        # ---------- Sidebar navigation ----------
+        "nav.home": "Home",
+        "nav.file_complaint": "File Complaint",
+        "nav.scheme_finder": "Scheme Finder",
+        "nav.track_complaint": "Track Complaint",
+        "nav.settings": "Settings",
+
+        # ---------- Sidebar brand ----------
+        # "AI" itself is kept as a literal, untranslated span in
+        # frontend/components/sidebar.py (a fixed, globally recognized
+        # acronym, styled in teal) - only the "GramVaani" part is
+        # looked up here, so this key holds just that prefix.
+        "sidebar.app_title_prefix": "GramVaani",
+        "sidebar.tagline": "Voice of the Citizen",
+    },
+    "hi": {
+        # ---------- Sidebar navigation ----------
+        "nav.home": "होम",
+        "nav.file_complaint": "शिकायत दर्ज करें",
+        "nav.scheme_finder": "योजना खोजक",
+        "nav.track_complaint": "शिकायत ट्रैक करें",
+        "nav.settings": "सेटिंग्स",
+
+        # ---------- Sidebar brand ----------
+        "sidebar.app_title_prefix": "ग्रामवाणी",
+        "sidebar.tagline": "नागरिक की आवाज़",
+    },
 }

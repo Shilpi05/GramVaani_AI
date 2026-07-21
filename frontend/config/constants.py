@@ -33,7 +33,6 @@ APP_STAGE_LABEL: str = "AI-Powered"
 DEFAULT_DARK_MODE: bool = False
 
 SIDEBAR_BRAND_ICON: str = "🗣️"
-SIDEBAR_TAGLINE: str = "Voice of the Citizen"
 SIDEBAR_FOOTER: str = f"{APP_VERSION} · {APP_STAGE_LABEL}"
 
 
@@ -44,16 +43,15 @@ class NavItem(TypedDict):
     """Shape of a single sidebar navigation entry."""
 
     key: str
-    label: str
     icon: str
 
 
 NAV_ITEMS: List[NavItem] = [
-    {"key": "home", "label": "Home", "icon": "🏠"},
-    {"key": "file_complaint", "label": "File Complaint", "icon": "📝"},
-    {"key": "scheme_finder", "label": "Scheme Finder", "icon": "🎯"},
-    {"key": "track_complaint", "label": "Track Complaint", "icon": "📍"},
-    {"key": "settings", "label": "Settings", "icon": "⚙"},
+    {"key": "home", "icon": "🏠"},
+    {"key": "file_complaint", "icon": "📝"},
+    {"key": "scheme_finder", "icon": "🎯"},
+    {"key": "track_complaint", "icon": "📍"},
+    {"key": "settings", "icon": "⚙"},
 ]
 
 DEFAULT_PAGE: str = "home"
