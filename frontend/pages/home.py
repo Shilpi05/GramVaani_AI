@@ -51,36 +51,12 @@ from frontend.components.theme import (
     RADIUS_LG,
 )
 from frontend.config.constants import (
-    HOME_CTA_BANNER_BUTTON_LABEL,
-    HOME_CTA_BANNER_SUBTITLE,
     HOME_CTA_BANNER_TARGET_PAGE,
-    HOME_CTA_BANNER_TITLE,
-    HOME_FEATURES,
-    HOME_FEATURES_EYEBROW,
-    HOME_FEATURES_SUBTITLE,
-    HOME_FEATURES_TITLE,
-    HOME_HERO_EYEBROW,
-    HOME_HERO_HEADLINE,
-    HOME_HERO_PRIMARY_CTA_LABEL,
     HOME_HERO_PRIMARY_CTA_TARGET_PAGE,
-    HOME_HERO_SECONDARY_CTA_LABEL,
     HOME_HERO_SECONDARY_CTA_TARGET_PAGE,
-    HOME_HERO_SUBHEADLINE,
-    HOME_HOW_IT_WORKS_EYEBROW,
-    HOME_HOW_IT_WORKS_STEPS,
-    HOME_HOW_IT_WORKS_SUBTITLE,
-    HOME_HOW_IT_WORKS_TITLE,
-    HOME_STAT_LABELS,
-    HOME_STATS_EYEBROW,
-    HOME_STATS_SUBTITLE,
-    HOME_STATS_TITLE,
-    HOME_TRUST_BADGES,
-    HOME_WORKFLOW_EYEBROW,
-    HOME_WORKFLOW_STEPS,
-    HOME_WORKFLOW_SUBTITLE,
-    HOME_WORKFLOW_TITLE,
 )
 from frontend.utils.helpers import navigate_to
+from frontend.utils.i18n import t
 
 # ----------------------------------------------------------------------
 # Scoped CSS for this page only (class prefix: gv-home-).
@@ -253,14 +229,14 @@ def _render_hero() -> None:
     """Renders the hero section: headline, subheadline, trust badges."""
     trust_pills = "".join(
         f'<span class="gv-home-trust-pill">{badge["icon"]} {badge["label"]}</span>'
-        for badge in HOME_TRUST_BADGES
+        for badge in t("home.hero.trust_badges")
     )
 
     hero_html = (
         '<div class="gv-home-hero">'
-        f'<span class="gv-home-hero-eyebrow">{HOME_HERO_EYEBROW}</span>'
-        f"<h1 class=\"gv-home-hero-title\">{HOME_HERO_HEADLINE}</h1>"
-        f'<p class="gv-home-hero-subtitle">{HOME_HERO_SUBHEADLINE}</p>'
+        f'<span class="gv-home-hero-eyebrow">{t("home.hero.eyebrow")}</span>'
+        f'<h1 class="gv-home-hero-title">{t("home.hero.headline")}</h1>'
+        f'<p class="gv-home-hero-subtitle">{t("home.hero.subheadline")}</p>'
         f'<div class="gv-home-trust-row">{trust_pills}</div>'
         "</div>"
     )
@@ -269,7 +245,7 @@ def _render_hero() -> None:
     cta_col1, cta_col2, _spacer = st.columns([1, 1, 2])
     with cta_col1:
         if st.button(
-            HOME_HERO_PRIMARY_CTA_LABEL,
+            t("home.hero.primary_cta_label"),
             use_container_width=True,
             type="primary",
             key="gv_home_hero_primary_cta",
@@ -277,7 +253,7 @@ def _render_hero() -> None:
             navigate_to(HOME_HERO_PRIMARY_CTA_TARGET_PAGE)
     with cta_col2:
         if st.button(
-            HOME_HERO_SECONDARY_CTA_LABEL,
+            t("home.hero.secondary_cta_label"),
             use_container_width=True,
             key="gv_home_hero_secondary_cta",
         ):
@@ -298,7 +274,9 @@ def _render_section_header(eyebrow: str, title: str, subtitle: str) -> None:
 
 def _render_statistics() -> None:
     """Renders the live, session-only Statistics section."""
-    _render_section_header(HOME_STATS_EYEBROW, HOME_STATS_TITLE, HOME_STATS_SUBTITLE)
+    _render_section_header(
+        t("home.stats.eyebrow"), t("home.stats.title"), t("home.stats.subtitle")
+    )
 
     stats = _get_session_stats()
     stat_values = [stats["filed"], stats["in_progress"], stats["resolved"]]
@@ -312,7 +290,7 @@ def _render_statistics() -> None:
         f'<div class="gv-home-stat-label">{label}</div>'
         "</div>"
         "</div>"
-        for icon, value, label in zip(stat_icons, stat_values, HOME_STAT_LABELS)
+        for icon, value, label in zip(stat_icons, stat_values, t("home.stats.labels"))
     )
 
     st.markdown(
@@ -324,17 +302,18 @@ def _render_statistics() -> None:
 def _render_workflow() -> None:
     """Renders the Voice Complaint Workflow step strip."""
     _render_section_header(
-        HOME_WORKFLOW_EYEBROW, HOME_WORKFLOW_TITLE, HOME_WORKFLOW_SUBTITLE
+        t("home.workflow.eyebrow"), t("home.workflow.title"), t("home.workflow.subtitle")
     )
 
+    step_label = t("home.workflow.step_label")
     steps = "".join(
         '<div class="gv-home-workflow-step">'
-        f'<div class="gv-home-workflow-step-number">Step {index + 1}</div>'
+        f'<div class="gv-home-workflow-step-number">{step_label} {index + 1}</div>'
         f'<div class="gv-home-workflow-icon">{step["icon"]}</div>'
         f'<div class="gv-home-workflow-title">{step["title"]}</div>'
         f'<p class="gv-home-workflow-text">{step["text"]}</p>'
         "</div>"
-        for index, step in enumerate(HOME_WORKFLOW_STEPS)
+        for index, step in enumerate(t("home.workflow.steps"))
     )
 
     st.markdown(
@@ -346,7 +325,7 @@ def _render_workflow() -> None:
 def _render_features() -> None:
     """Renders the Features capability grid."""
     _render_section_header(
-        HOME_FEATURES_EYEBROW, HOME_FEATURES_TITLE, HOME_FEATURES_SUBTITLE
+        t("home.features.eyebrow"), t("home.features.title"), t("home.features.subtitle")
     )
 
     cards = "".join(
@@ -355,7 +334,7 @@ def _render_features() -> None:
         f'<div class="gv-home-card-title">{feature["title"]}</div>'
         f'<p class="gv-home-card-text">{feature["text"]}</p>'
         "</div>"
-        for feature in HOME_FEATURES
+        for feature in t("home.features.items")
     )
 
     st.markdown(
@@ -367,7 +346,9 @@ def _render_features() -> None:
 def _render_how_it_works() -> None:
     """Renders the citizen-facing How It Works steps."""
     _render_section_header(
-        HOME_HOW_IT_WORKS_EYEBROW, HOME_HOW_IT_WORKS_TITLE, HOME_HOW_IT_WORKS_SUBTITLE
+        t("home.how_it_works.eyebrow"),
+        t("home.how_it_works.title"),
+        t("home.how_it_works.subtitle"),
     )
 
     steps = "".join(
@@ -376,7 +357,7 @@ def _render_how_it_works() -> None:
         f'<div class="gv-home-how-title">{step["title"]}</div>'
         f'<p class="gv-home-how-text">{step["text"]}</p>'
         "</div>"
-        for index, step in enumerate(HOME_HOW_IT_WORKS_STEPS)
+        for index, step in enumerate(t("home.how_it_works.steps"))
     )
 
     st.markdown(
@@ -390,8 +371,8 @@ def _render_cta_banner() -> None:
     st.markdown(
         '<div class="gv-home-cta-banner">'
         "<div>"
-        f'<p class="gv-home-cta-banner-title">{HOME_CTA_BANNER_TITLE}</p>'
-        f'<p class="gv-home-cta-banner-subtitle">{HOME_CTA_BANNER_SUBTITLE}</p>'
+        f'<p class="gv-home-cta-banner-title">{t("home.cta_banner.title")}</p>'
+        f'<p class="gv-home-cta-banner-subtitle">{t("home.cta_banner.subtitle")}</p>'
         "</div>"
         "</div>",
         unsafe_allow_html=True,
@@ -400,7 +381,7 @@ def _render_cta_banner() -> None:
     button_col, _spacer = st.columns([1, 3])
     with button_col:
         if st.button(
-            HOME_CTA_BANNER_BUTTON_LABEL,
+            t("home.cta_banner.button_label"),
             use_container_width=True,
             type="primary",
             key="gv_home_cta_banner_button",
