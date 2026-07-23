@@ -59,48 +59,16 @@ from frontend.config.constants import (
     DEFAULT_COMPLAINT_LANGUAGE,
     DEFAULT_DARK_MODE,
     LANGUAGE_OPTIONS,
-    SETTINGS_AI_ASSISTANCE_LABEL,
-    SETTINGS_AI_ASSISTANCE_VALUE,
-    SETTINGS_APP_INFO_TITLE,
-    SETTINGS_APP_NAME_LABEL,
-    SETTINGS_AUTO_DELETE_HELP,
-    SETTINGS_AUTO_DELETE_LABEL,
-    SETTINGS_CLEAR_SESSION_BUTTON_LABEL,
-    SETTINGS_CLEAR_SESSION_HELP,
-    SETTINGS_CLEAR_SESSION_SUCCESS_MESSAGE,
-    SETTINGS_EYEBROW,
-    SETTINGS_LANGUAGE_HELP,
-    SETTINGS_LANGUAGE_LABEL,
-    SETTINGS_PREFERENCES_TITLE,
-    SETTINGS_RESTORE_DEFAULTS_BUTTON_LABEL,
-    SETTINGS_RESTORE_DEFAULTS_HELP,
-    SETTINGS_RESTORE_DEFAULTS_SUCCESS_MESSAGE,
-    SETTINGS_SPEECH_RECOGNITION_LABEL,
-    SETTINGS_SPEECH_RECOGNITION_VALUE,
-    SETTINGS_SUBTITLE,
-    SETTINGS_SYSTEM_TITLE,
-    SETTINGS_TITLE,
-    SETTINGS_VERSION_LABEL,
 )
-from frontend.utils.i18n import DEFAULT_LANGUAGE, get_language, set_language
+from frontend.utils.i18n import DEFAULT_LANGUAGE, get_language, set_language, t
 
-# Application Language option labels. Kept local to this page rather
-# than added to frontend/config/constants.py: this task is scoped to
-# settings.py only, and every other page already imports its own copy
-# from constants.py, so nothing here is duplicated - it's simply not
-# centralized yet. A later pass that wires other pages up to
-# frontend/utils/i18n.py's t() helper is the natural point to move
-# this alongside everything else.
-#
-# Each language's own name for itself, shown as this selector's
-# options - deliberately NOT translated relative to whichever
-# language is currently active (a language picker conventionally
-# shows every option in its own native name: "English" is always
-# "English", never "अंग्रेज़ी", even while viewing the Hindi UI).
-_APP_LANGUAGE_LABEL = "Application Language"
-_APP_LANGUAGE_HELP = (
-    "Changes the language of the app's own interface - menus, labels, and messages."
-)
+# Application Language option labels. Each language's own name for
+# itself, shown as this selector's options - deliberately NOT
+# translated relative to whichever language is currently active (a
+# language picker conventionally shows every option in its own native
+# name: "English" is always "English", never "अंग्रेज़ी", even while
+# viewing the Hindi UI). So these stay local literals rather than
+# keys in `frontend/utils/i18n.py`.
 _APP_LANGUAGE_NATIVE_NAMES = {"en": "English", "hi": "हिन्दी"}
 _APP_LANGUAGE_OPTIONS = list(_APP_LANGUAGE_NATIVE_NAMES.keys())
 
@@ -174,18 +142,21 @@ def _render_app_status_card() -> None:
     """Renders the compact, citizen-facing "Application Status" card."""
     rows = "".join(
         [
-            info_row_html(SETTINGS_APP_NAME_LABEL, APP_NAME),
-            info_row_html(SETTINGS_VERSION_LABEL, APP_VERSION),
-            info_row_html(SETTINGS_AI_ASSISTANCE_LABEL, SETTINGS_AI_ASSISTANCE_VALUE),
+            info_row_html(t("settings.app_name_label"), APP_NAME),
+            info_row_html(t("settings.version_label"), APP_VERSION),
             info_row_html(
-                SETTINGS_SPEECH_RECOGNITION_LABEL, SETTINGS_SPEECH_RECOGNITION_VALUE
+                t("settings.ai_assistance_label"), t("settings.ai_assistance_value")
+            ),
+            info_row_html(
+                t("settings.speech_recognition_label"),
+                t("settings.speech_recognition_value"),
             ),
         ]
     )
     st.markdown(
         f"""
         <div class="gv-card gv-settings-card">
-            <h3>{SETTINGS_APP_INFO_TITLE}</h3>
+            <h3>{t("settings.app_info_title")}</h3>
             {rows}
         </div>
         """,
@@ -202,7 +173,7 @@ def _render_preferences_card() -> None:
     exact session-state key the rest of the app reads.
     """
     st.markdown(
-        f'<div class="gv-card gv-settings-card"><h3>{SETTINGS_PREFERENCES_TITLE}</h3>',
+        f'<div class="gv-card gv-settings-card"><h3>{t("settings.preferences_title")}</h3>',
         unsafe_allow_html=True,
     )
 
@@ -220,11 +191,11 @@ def _render_preferences_card() -> None:
         current_app_language = DEFAULT_LANGUAGE
 
     selected_app_language = st.selectbox(
-        _APP_LANGUAGE_LABEL,
+        t("settings.app_language_label"),
         options=_APP_LANGUAGE_OPTIONS,
         index=_APP_LANGUAGE_OPTIONS.index(current_app_language),
         format_func=lambda code: _APP_LANGUAGE_NATIVE_NAMES.get(code, code),
-        help=_APP_LANGUAGE_HELP,
+        help=t("settings.app_language_help"),
         key="gv_app_language_select",
     )
     if selected_app_language != current_app_language:
@@ -234,25 +205,31 @@ def _render_preferences_card() -> None:
     # --- Preferred Complaint Language ---
     # "Auto Detect" is one of LANGUAGE_OPTIONS' own selectable values
     # (not a separate toggle), so this selectbox alone covers it.
+    # As in `frontend/pages/file_complaint.py`'s language radio, the
+    # stored/returned value stays the canonical English option (the
+    # shared "gv_complaint_language" session-state contract) - only
+    # the on-screen label is translated, via `format_func`.
     current_language = st.session_state.get(
         "gv_complaint_language", DEFAULT_COMPLAINT_LANGUAGE
     )
     if current_language not in LANGUAGE_OPTIONS:
         current_language = DEFAULT_COMPLAINT_LANGUAGE
+    language_option_labels = t("file_complaint.language_option_labels")
     selected_language = st.selectbox(
-        SETTINGS_LANGUAGE_LABEL,
+        t("settings.language_label"),
         options=LANGUAGE_OPTIONS,
         index=LANGUAGE_OPTIONS.index(current_language),
-        help=SETTINGS_LANGUAGE_HELP,
+        format_func=lambda option: language_option_labels.get(option, option),
+        help=t("settings.language_help"),
         key="gv_preferred_language_select",
     )
     st.session_state["gv_complaint_language"] = selected_language
 
     # --- Auto Delete Uploaded Files ---
     auto_delete = st.checkbox(
-        SETTINGS_AUTO_DELETE_LABEL,
+        t("settings.auto_delete_label"),
         value=st.session_state.get("gv_auto_delete_files", DEFAULT_AUTO_DELETE_FILES),
-        help=SETTINGS_AUTO_DELETE_HELP,
+        help=t("settings.auto_delete_help"),
         key="gv_auto_delete_checkbox",
     )
     st.session_state["gv_auto_delete_files"] = auto_delete
@@ -304,7 +281,7 @@ def _handle_clear_session() -> None:
     _delete_directory_contents(EVIDENCE_DIR)
     _delete_directory_contents(_TEMP_AUDIO_DIR)
 
-    st.success(SETTINGS_CLEAR_SESSION_SUCCESS_MESSAGE)
+    st.success(t("settings.clear_session_success_message"))
 
 
 def _handle_restore_defaults() -> None:
@@ -331,29 +308,29 @@ def _handle_restore_defaults() -> None:
     ):
         st.session_state.pop(widget_key, None)
 
-    st.success(SETTINGS_RESTORE_DEFAULTS_SUCCESS_MESSAGE)
+    st.success(t("settings.restore_defaults_success_message"))
 
 
 def _render_system_card() -> None:
     """Renders the "System" card: Clear Session and Restore Defaults."""
     st.markdown(
-        f'<div class="gv-card gv-settings-card"><h3>{SETTINGS_SYSTEM_TITLE}</h3>',
+        f'<div class="gv-card gv-settings-card"><h3>{t("settings.system_title")}</h3>',
         unsafe_allow_html=True,
     )
 
     col_clear, col_restore = st.columns(2)
     with col_clear:
         if st.button(
-            SETTINGS_CLEAR_SESSION_BUTTON_LABEL,
-            help=SETTINGS_CLEAR_SESSION_HELP,
+            t("settings.clear_session_button_label"),
+            help=t("settings.clear_session_help"),
             use_container_width=True,
             key="gv_clear_session_button",
         ):
             _handle_clear_session()
     with col_restore:
         if st.button(
-            SETTINGS_RESTORE_DEFAULTS_BUTTON_LABEL,
-            help=SETTINGS_RESTORE_DEFAULTS_HELP,
+            t("settings.restore_defaults_button_label"),
+            help=t("settings.restore_defaults_help"),
             use_container_width=True,
             key="gv_restore_defaults_button",
         ):
@@ -367,9 +344,9 @@ def render() -> None:
     _inject_compact_settings_styles()
 
     page_header(
-        title=SETTINGS_TITLE,
-        subtitle=SETTINGS_SUBTITLE,
-        eyebrow=SETTINGS_EYEBROW,
+        title=t("settings.title"),
+        subtitle=t("settings.subtitle"),
+        eyebrow=t("settings.eyebrow"),
     )
 
     _render_app_status_card()

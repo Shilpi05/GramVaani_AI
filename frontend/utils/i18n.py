@@ -115,13 +115,9 @@ def t(key: str) -> Any:
 # silently fall back mid-page.
 #
 # Populated so far: navigation (sidebar nav labels, the app title, and
-# the tagline - see `frontend/components/sidebar.py`), the Home page
-# (`frontend/pages/home.py`), the File Complaint page
-# (`frontend/pages/file_complaint.py`), the Scheme Finder page
-# (`frontend/pages/scheme_finder.py`), and the Track Complaint page
-# (`frontend/pages/track_complaint.py`). Settings is still entirely in
-# English and untouched by this module; that's a later pass, not an
-# oversight.
+# the tagline - see `frontend/components/sidebar.py`) and every page
+# under `frontend/pages/`: Home, File Complaint, Scheme Finder, Track
+# Complaint, and Settings.
 #
 # Note on structured "home.*"/"file_complaint.*" keys: several (e.g.
 # "home.features.items", "file_complaint.language_option_labels") map
@@ -425,6 +421,50 @@ TRANSLATIONS: dict = {
             "This is mock contact information for demo purposes and does not "
             "represent a real government office."
         ),
+
+        # ---------- Settings page ----------
+        "settings.eyebrow": "Preferences",
+        "settings.title": "Settings",
+        "settings.subtitle": "Manage your preferences and session data.",
+
+        "settings.app_info_title": "Application Status",
+        "settings.app_name_label": "Application",
+        "settings.version_label": "Version",
+        "settings.ai_assistance_label": "AI Assistance",
+        "settings.ai_assistance_value": "Enabled",
+        "settings.speech_recognition_label": "Speech Recognition",
+        "settings.speech_recognition_value": "Available",
+
+        "settings.preferences_title": "Preferences",
+        "settings.app_language_label": "Application Language",
+        "settings.app_language_help": (
+            "Changes the language of the app's own interface - menus, labels, and messages."
+        ),
+        "settings.language_label": "Preferred Complaint Language",
+        "settings.language_help": (
+            "Sets the default selection on the File Complaint page's "
+            "language chooser. Ignored while Auto Detect is on."
+        ),
+        "settings.auto_delete_label": "Auto Delete Uploaded Files",
+        "settings.auto_delete_help": (
+            "When on, a previous evidence photo is deleted from disk as soon "
+            "as it's replaced with a new one."
+        ),
+
+        "settings.system_title": "System",
+        "settings.clear_session_button_label": "🗑 Clear Session",
+        "settings.clear_session_help": (
+            "Clears this session's transcript, generated complaint, scheme "
+            "results, evidence photo, and tracking records. Preferences below "
+            "are not affected."
+        ),
+        "settings.clear_session_success_message": "Session data cleared.",
+        "settings.restore_defaults_button_label": "↺ Restore Defaults",
+        "settings.restore_defaults_help": (
+            "Resets Preferred Language, Auto Detect, and Auto Delete above "
+            "back to their original defaults."
+        ),
+        "settings.restore_defaults_success_message": "Preferences restored to defaults.",
     },
     "hi": {
         # ---------- Sidebar navigation ----------
@@ -699,5 +739,49 @@ TRANSLATIONS: dict = {
             "यह डेमो उद्देश्यों के लिए मॉक संपर्क जानकारी है और किसी वास्तविक "
             "सरकारी कार्यालय का प्रतिनिधित्व नहीं करती।"
         ),
+
+        # ---------- Settings page ----------
+        "settings.eyebrow": "प्राथमिकताएं",
+        "settings.title": "सेटिंग्स",
+        "settings.subtitle": "अपनी प्राथमिकताओं और सत्र डेटा को प्रबंधित करें।",
+
+        "settings.app_info_title": "एप्लिकेशन स्थिति",
+        "settings.app_name_label": "एप्लिकेशन",
+        "settings.version_label": "संस्करण",
+        "settings.ai_assistance_label": "एआई सहायता",
+        "settings.ai_assistance_value": "सक्षम",
+        "settings.speech_recognition_label": "वाणी पहचान",
+        "settings.speech_recognition_value": "उपलब्ध",
+
+        "settings.preferences_title": "प्राथमिकताएं",
+        "settings.app_language_label": "एप्लिकेशन भाषा",
+        "settings.app_language_help": (
+            "ऐप के अपने इंटरफ़ेस की भाषा बदलता है - मेनू, लेबल और संदेश।"
+        ),
+        "settings.language_label": "पसंदीदा शिकायत भाषा",
+        "settings.language_help": (
+            "फ़ाइल शिकायत पृष्ठ के भाषा चयनकर्ता पर डिफ़ॉल्ट चयन सेट करता है। "
+            "जब स्वतः पहचान चालू हो तो इसे नज़रअंदाज़ किया जाता है।"
+        ),
+        "settings.auto_delete_label": "अपलोड की गई फ़ाइलें स्वतः हटाएं",
+        "settings.auto_delete_help": (
+            "चालू होने पर, पिछली साक्ष्य फोटो को नई फोटो से बदलते ही डिस्क "
+            "से हटा दिया जाता है।"
+        ),
+
+        "settings.system_title": "सिस्टम",
+        "settings.clear_session_button_label": "🗑 सत्र साफ़ करें",
+        "settings.clear_session_help": (
+            "इस सत्र की ट्रांसक्रिप्ट, तैयार की गई शिकायत, योजना परिणाम, "
+            "साक्ष्य फोटो, और ट्रैकिंग रिकॉर्ड साफ़ करता है। नीचे दी गई "
+            "प्राथमिकताएं प्रभावित नहीं होतीं।"
+        ),
+        "settings.clear_session_success_message": "सत्र डेटा साफ़ किया गया।",
+        "settings.restore_defaults_button_label": "↺ डिफ़ॉल्ट पुनर्स्थापित करें",
+        "settings.restore_defaults_help": (
+            "ऊपर दी गई पसंदीदा भाषा, स्वतः पहचान, और स्वतः हटाएं को उनके "
+            "मूल डिफ़ॉल्ट पर पुनर्स्थापित करता है।"
+        ),
+        "settings.restore_defaults_success_message": "प्राथमिकताएं डिफ़ॉल्ट पर पुनर्स्थापित की गईं।",
     },
 }
