@@ -115,18 +115,24 @@ def t(key: str) -> Any:
 # silently fall back mid-page.
 #
 # Populated so far: navigation (sidebar nav labels, the app title, and
-# the tagline - see `frontend/components/sidebar.py`) and the Home page
-# (`frontend/pages/home.py`). Other page content (File Complaint,
-# Scheme Finder, Track Complaint, Settings) is still entirely in
+# the tagline - see `frontend/components/sidebar.py`), the Home page
+# (`frontend/pages/home.py`), the File Complaint page
+# (`frontend/pages/file_complaint.py`), the Scheme Finder page
+# (`frontend/pages/scheme_finder.py`), and the Track Complaint page
+# (`frontend/pages/track_complaint.py`). Settings is still entirely in
 # English and untouched by this module; that's a later pass, not an
 # oversight.
 #
-# Note on structured "home.*" keys: several (e.g. "home.features.items",
-# "home.workflow.steps") map to a list of dicts rather than a plain
-# string. Icons (emoji) inside those dicts are identical across
-# languages and kept only for convenience of co-locating them with
-# their translated title/text - they are not translated content
-# themselves.
+# Note on structured "home.*"/"file_complaint.*" keys: several (e.g.
+# "home.features.items", "file_complaint.language_option_labels") map
+# to a list/dict rather than a plain string. Icons (emoji) inside list-
+# of-dict values are identical across languages and kept only for
+# convenience of co-locating them with their translated title/text -
+# they are not translated content themselves. Similarly, the keys of
+# "file_complaint.language_option_labels" are the canonical English
+# option values from `frontend/config/constants.py` (LANGUAGE_OPTIONS)
+# - shared, unchanging session-state values - only their dict values
+# (the on-screen label) vary by language.
 # ----------------------------------------------------------------------
 TRANSLATIONS: dict = {
     "en": {
@@ -265,6 +271,160 @@ TRANSLATIONS: dict = {
         "home.cta_banner.title": "Ready to raise your voice?",
         "home.cta_banner.subtitle": "It takes less than a minute to file your first complaint.",
         "home.cta_banner.button_label": "🎙 Get Started",
+
+        # ---------- File Complaint page ----------
+        "file_complaint.eyebrow": "Grievance Redressal",
+        "file_complaint.title": "File Complaint",
+        "file_complaint.subtitle": (
+            "Register a complaint using your voice, with an optional evidence photo."
+        ),
+        "file_complaint.voice_card_title": "🎙 Voice Complaint",
+        "file_complaint.voice_card_text": (
+            "Record your complaint in your own language and it will be "
+            "transcribed automatically."
+        ),
+        "file_complaint.image_card_title": "📷 Upload Evidence",
+        "file_complaint.image_card_text": (
+            "Optionally attach a photo of the issue (e.g. potholes, garbage, "
+            "broken infrastructure) to support your complaint."
+        ),
+        "file_complaint.evidence_attached_note": "📎 Evidence photo attached:",
+
+        "file_complaint.audio_uploader_label": "Upload your complaint audio",
+        "file_complaint.audio_uploader_help": "Supported formats: WAV, MP3, M4A",
+        "file_complaint.process_audio_button_label": "🎧 Process Audio",
+        "file_complaint.audio_processing_message": "Processing your audio... please wait.",
+        "file_complaint.transcript_card_title": "🗒 Recognized Speech",
+        "file_complaint.audio_no_file_warning": "Please upload an audio file before processing.",
+        "file_complaint.audio_empty_file_warning": "The uploaded audio file appears to be empty.",
+        "file_complaint.audio_unsupported_format_error": (
+            "Unsupported file format. Please upload a WAV, MP3, or M4A file."
+        ),
+        "file_complaint.audio_transcription_failed_error": (
+            "Speech recognition failed. Please try again with a different audio file."
+        ),
+        "file_complaint.audio_no_speech_detected_warning": "No speech was detected in this audio file.",
+
+        "file_complaint.language_label": "Complaint Language",
+        # Keys here are the canonical option values in
+        # `frontend/config/constants.py` (LANGUAGE_OPTIONS) - the values
+        # actually stored in `st.session_state["gv_complaint_language"]`
+        # and shared with `frontend/pages/settings.py`. Only the
+        # DISPLAYED label (used via `format_func`) is translated; the
+        # underlying stored value never changes with language, so the
+        # setting stays valid across both pages regardless of the
+        # active interface language.
+        "file_complaint.language_option_labels": {
+            "Hindi": "Hindi",
+            "English": "English",
+            "Auto Detect": "Auto Detect",
+        },
+
+        "file_complaint.generate_complaint_button_label": "🧾 Generate Complaint",
+        "file_complaint.generation_processing_message": "Generating your complaint... please wait.",
+
+        "file_complaint.result_card_title": "📋 Generated Complaint",
+        "file_complaint.complaint_id_label": "Complaint ID",
+        "file_complaint.complaint_type_label": "Complaint Type",
+        "file_complaint.department_label": "Department",
+        "file_complaint.priority_label": "Priority",
+        "file_complaint.summary_label": "Summary",
+        "file_complaint.formal_text_label": "Formal Complaint",
+
+        "file_complaint.empty_transcript_warning": (
+            "There is no recognized speech yet. Please process an audio file first."
+        ),
+        "file_complaint.scheme_no_match_message": "No direct government scheme found.",
+
+        "file_complaint.download_button_label": "📄 Download Complaint",
+        "file_complaint.pdf_generation_failed_error": (
+            "Could not generate the PDF for this complaint. Please try again."
+        ),
+
+        # ---------- Scheme Finder page ----------
+        "scheme_finder.eyebrow": "Scheme Discovery",
+        "scheme_finder.title": "Scheme Finder",
+        "scheme_finder.subtitle": (
+            "Government schemes relevant to your complaint, matched automatically."
+        ),
+        "scheme_finder.card_title": "🔎 How it works",
+        "scheme_finder.card_text": (
+            "When you file a complaint, GramVaani AI matches its type, "
+            "department, and summary against a local knowledge base of "
+            "government schemes. Anything relevant appears below - no extra "
+            "steps needed."
+        ),
+        "scheme_finder.recommendation_card_title": "🏛 Recommended Government Schemes",
+        "scheme_finder.eligibility_label": "Eligibility",
+        "scheme_finder.department_label": "Responsible Department",
+        "scheme_finder.empty_state_text": (
+            "No schemes to show yet - file a complaint first and any relevant "
+            "government schemes will appear here automatically."
+        ),
+        "scheme_finder.empty_state_button_label": "📝 File a Complaint",
+
+        # ---------- Track Complaint page ----------
+        "track_complaint.eyebrow": "Status Tracking",
+        "track_complaint.title": "Track Complaint",
+        "track_complaint.subtitle": "Enter your Complaint ID to check its current status.",
+        "track_complaint.card_title": "📍 How it works",
+        "track_complaint.card_text": (
+            "Enter the Complaint ID shown when your complaint was generated "
+            "(e.g. GV-20260713-00001) to see its current status. This is a "
+            "mock tracker - complaint status is simulated locally for this "
+            "browser session only and is not stored in any database."
+        ),
+        "track_complaint.id_input_label": "Complaint ID",
+        "track_complaint.id_input_placeholder": "e.g. GV-20260713-00001",
+        "track_complaint.button_label": "🔍 Track Complaint",
+
+        "track_complaint.empty_id_warning": "Please enter a Complaint ID to track.",
+        "track_complaint.not_found_warning": (
+            "No complaint found with this ID in the current session. "
+            "Complaint tracking only works for complaints generated during "
+            "this browser session - it resets if the app restarts or the "
+            "session ends."
+        ),
+
+        "track_complaint.result_card_title": "📦 Complaint Status",
+        "track_complaint.complaint_id_label": "Complaint ID",
+        "track_complaint.status_label": "Current Status",
+        "track_complaint.department_label": "Department",
+        "track_complaint.date_label": "Submission Date",
+        "track_complaint.priority_label": "Priority",
+        "track_complaint.estimated_resolution_label": "Estimated Resolution Time",
+        "track_complaint.last_updated_label": "Last Updated",
+        "track_complaint.resolved_confirmation_prefix": "Verified as resolved on",
+
+        "track_complaint.not_found_title": "Complaint Not Found",
+        "track_complaint.empty_id_title": "Enter a Complaint ID",
+
+        "track_complaint.timeline_card_title": "🕒 Complaint Timeline",
+        "track_complaint.current_stage_tag": "Current Stage",
+        # Positionally matches the internal DISPLAY_STAGES list in
+        # `frontend/pages/track_complaint.py` - those English values
+        # remain the canonical lookup keys for the (untranslated,
+        # per-instructions) officer remarks; this list only supplies
+        # the translated on-screen timeline heading for each stage.
+        "track_complaint.display_stage_labels": [
+            "Complaint Submitted",
+            "Under Review",
+            "Assigned to Municipal Officer",
+            "Officer Visit Scheduled",
+            "Resolved",
+        ],
+
+        "track_complaint.remarks_card_title": "🗒️ Officer Remarks",
+
+        "track_complaint.contact_card_title": "🏢 Department Contact",
+        "track_complaint.contact_department_label": "Responsible Department",
+        "track_complaint.contact_officer_label": "Officer",
+        "track_complaint.contact_phone_label": "Phone",
+        "track_complaint.contact_email_label": "Email",
+        "track_complaint.contact_mock_note": (
+            "This is mock contact information for demo purposes and does not "
+            "represent a real government office."
+        ),
     },
     "hi": {
         # ---------- Sidebar navigation ----------
@@ -397,5 +557,147 @@ TRANSLATIONS: dict = {
         "home.cta_banner.title": "अपनी आवाज़ उठाने के लिए तैयार हैं?",
         "home.cta_banner.subtitle": "अपनी पहली शिकायत दर्ज करने में एक मिनट से भी कम समय लगता है।",
         "home.cta_banner.button_label": "🎙 शुरू करें",
+
+        # ---------- File Complaint page ----------
+        "file_complaint.eyebrow": "शिकायत निवारण",
+        "file_complaint.title": "शिकायत दर्ज करें",
+        "file_complaint.subtitle": (
+            "अपनी आवाज़ का उपयोग करके शिकायत दर्ज करें, वैकल्पिक साक्ष्य फोटो के साथ।"
+        ),
+        "file_complaint.voice_card_title": "🎙 वॉइस शिकायत",
+        "file_complaint.voice_card_text": (
+            "अपनी भाषा में अपनी शिकायत रिकॉर्ड करें और यह स्वचालित रूप से "
+            "लिखित रूप में बदल जाएगी।"
+        ),
+        "file_complaint.image_card_title": "📷 साक्ष्य अपलोड करें",
+        "file_complaint.image_card_text": (
+            "अपनी शिकायत के समर्थन में समस्या (जैसे गड्ढे, कचरा, क्षतिग्रस्त "
+            "बुनियादी ढांचा) की एक तस्वीर वैकल्पिक रूप से संलग्न करें।"
+        ),
+        "file_complaint.evidence_attached_note": "📎 साक्ष्य फोटो संलग्न:",
+
+        "file_complaint.audio_uploader_label": "अपनी शिकायत का ऑडियो अपलोड करें",
+        "file_complaint.audio_uploader_help": "समर्थित प्रारूप: WAV, MP3, M4A",
+        "file_complaint.process_audio_button_label": "🎧 ऑडियो प्रोसेस करें",
+        "file_complaint.audio_processing_message": "आपका ऑडियो प्रोसेस किया जा रहा है... कृपया प्रतीक्षा करें।",
+        "file_complaint.transcript_card_title": "🗒 पहचानी गई वाणी",
+        "file_complaint.audio_no_file_warning": "प्रोसेस करने से पहले कृपया एक ऑडियो फ़ाइल अपलोड करें।",
+        "file_complaint.audio_empty_file_warning": "अपलोड की गई ऑडियो फ़ाइल खाली प्रतीत होती है।",
+        "file_complaint.audio_unsupported_format_error": (
+            "असमर्थित फ़ाइल प्रारूप। कृपया WAV, MP3, या M4A फ़ाइल अपलोड करें।"
+        ),
+        "file_complaint.audio_transcription_failed_error": (
+            "वाणी पहचान विफल हुई। कृपया किसी भिन्न ऑडियो फ़ाइल के साथ पुनः प्रयास करें।"
+        ),
+        "file_complaint.audio_no_speech_detected_warning": "इस ऑडियो फ़ाइल में कोई वाणी नहीं मिली।",
+
+        "file_complaint.language_label": "शिकायत की भाषा",
+        "file_complaint.language_option_labels": {
+            "Hindi": "हिंदी",
+            "English": "अंग्रेज़ी",
+            "Auto Detect": "स्वतः पहचानें",
+        },
+
+        "file_complaint.generate_complaint_button_label": "🧾 शिकायत तैयार करें",
+        "file_complaint.generation_processing_message": "आपकी शिकायत तैयार की जा रही है... कृपया प्रतीक्षा करें।",
+
+        "file_complaint.result_card_title": "📋 तैयार की गई शिकायत",
+        "file_complaint.complaint_id_label": "शिकायत आईडी",
+        "file_complaint.complaint_type_label": "शिकायत प्रकार",
+        "file_complaint.department_label": "विभाग",
+        "file_complaint.priority_label": "प्राथमिकता",
+        "file_complaint.summary_label": "सारांश",
+        "file_complaint.formal_text_label": "औपचारिक शिकायत",
+
+        "file_complaint.empty_transcript_warning": (
+            "अभी तक कोई पहचानी गई वाणी नहीं है। कृपया पहले एक ऑडियो फ़ाइल प्रोसेस करें।"
+        ),
+        "file_complaint.scheme_no_match_message": "कोई सीधी सरकारी योजना नहीं मिली।",
+
+        "file_complaint.download_button_label": "📄 शिकायत डाउनलोड करें",
+        "file_complaint.pdf_generation_failed_error": (
+            "इस शिकायत के लिए पीडीएफ जनरेट नहीं किया जा सका। कृपया पुनः प्रयास करें।"
+        ),
+
+        # ---------- Scheme Finder page ----------
+        "scheme_finder.eyebrow": "योजना खोज",
+        "scheme_finder.title": "योजना खोजक",
+        "scheme_finder.subtitle": (
+            "आपकी शिकायत से संबंधित सरकारी योजनाएं, स्वचालित रूप से मिलान की गई।"
+        ),
+        "scheme_finder.card_title": "🔎 यह कैसे काम करता है",
+        "scheme_finder.card_text": (
+            "जब आप शिकायत दर्ज करते हैं, तो ग्रामवाणी एआई इसके प्रकार, विभाग "
+            "और सारांश का सरकारी योजनाओं के स्थानीय ज्ञान आधार से मिलान करता "
+            "है। जो भी प्रासंगिक हो वह नीचे दिखाई देता है - किसी अतिरिक्त "
+            "चरण की आवश्यकता नहीं।"
+        ),
+        "scheme_finder.recommendation_card_title": "🏛 अनुशंसित सरकारी योजनाएं",
+        "scheme_finder.eligibility_label": "पात्रता",
+        "scheme_finder.department_label": "जिम्मेदार विभाग",
+        "scheme_finder.empty_state_text": (
+            "अभी दिखाने के लिए कोई योजना नहीं है - पहले एक शिकायत दर्ज करें "
+            "और कोई भी प्रासंगिक सरकारी योजना यहां स्वचालित रूप से दिखाई देगी।"
+        ),
+        "scheme_finder.empty_state_button_label": "📝 शिकायत दर्ज करें",
+
+        # ---------- Track Complaint page ----------
+        "track_complaint.eyebrow": "स्थिति ट्रैकिंग",
+        "track_complaint.title": "शिकायत ट्रैक करें",
+        "track_complaint.subtitle": "अपनी शिकायत की वर्तमान स्थिति जांचने के लिए अपनी शिकायत आईडी दर्ज करें।",
+        "track_complaint.card_title": "📍 यह कैसे काम करता है",
+        "track_complaint.card_text": (
+            "अपनी शिकायत की वर्तमान स्थिति देखने के लिए शिकायत जनरेट होने पर "
+            "दिखाई गई शिकायत आईडी (जैसे GV-20260713-00001) दर्ज करें। यह एक "
+            "मॉक ट्रैकर है - शिकायत की स्थिति केवल इस ब्राउज़र सत्र के लिए "
+            "स्थानीय रूप से सिम्युलेट की जाती है और किसी डेटाबेस में संग्रहीत "
+            "नहीं है।"
+        ),
+        "track_complaint.id_input_label": "शिकायत आईडी",
+        "track_complaint.id_input_placeholder": "उदा. GV-20260713-00001",
+        "track_complaint.button_label": "🔍 शिकायत ट्रैक करें",
+
+        "track_complaint.empty_id_warning": "ट्रैक करने के लिए कृपया एक शिकायत आईडी दर्ज करें।",
+        "track_complaint.not_found_warning": (
+            "वर्तमान सत्र में इस आईडी के साथ कोई शिकायत नहीं मिली। शिकायत "
+            "ट्रैकिंग केवल इस ब्राउज़र सत्र के दौरान दर्ज की गई शिकायतों के "
+            "लिए काम करती है - ऐप पुनः आरंभ होने या सत्र समाप्त होने पर यह "
+            "रीसेट हो जाती है।"
+        ),
+
+        "track_complaint.result_card_title": "📦 शिकायत की स्थिति",
+        "track_complaint.complaint_id_label": "शिकायत आईडी",
+        "track_complaint.status_label": "वर्तमान स्थिति",
+        "track_complaint.department_label": "विभाग",
+        "track_complaint.date_label": "दर्ज करने की तिथि",
+        "track_complaint.priority_label": "प्राथमिकता",
+        "track_complaint.estimated_resolution_label": "अनुमानित समाधान समय",
+        "track_complaint.last_updated_label": "अंतिम अद्यतन",
+        "track_complaint.resolved_confirmation_prefix": "इस तारीख को सुलझाई गई के रूप में सत्यापित",
+
+        "track_complaint.not_found_title": "शिकायत नहीं मिली",
+        "track_complaint.empty_id_title": "एक शिकायत आईडी दर्ज करें",
+
+        "track_complaint.timeline_card_title": "🕒 शिकायत समयरेखा",
+        "track_complaint.current_stage_tag": "वर्तमान चरण",
+        "track_complaint.display_stage_labels": [
+            "शिकायत दर्ज की गई",
+            "समीक्षाधीन",
+            "नगरपालिका अधिकारी को सौंपी गई",
+            "अधिकारी का दौरा निर्धारित",
+            "सुलझाई गई",
+        ],
+
+        "track_complaint.remarks_card_title": "🗒️ अधिकारी की टिप्पणियां",
+
+        "track_complaint.contact_card_title": "🏢 विभाग संपर्क",
+        "track_complaint.contact_department_label": "जिम्मेदार विभाग",
+        "track_complaint.contact_officer_label": "अधिकारी",
+        "track_complaint.contact_phone_label": "फ़ोन",
+        "track_complaint.contact_email_label": "ईमेल",
+        "track_complaint.contact_mock_note": (
+            "यह डेमो उद्देश्यों के लिए मॉक संपर्क जानकारी है और किसी वास्तविक "
+            "सरकारी कार्यालय का प्रतिनिधित्व नहीं करती।"
+        ),
     },
 }

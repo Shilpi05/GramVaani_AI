@@ -69,39 +69,7 @@ from frontend.components.theme import (
     resolved_banner_html,
     status_badge_html,
 )
-from frontend.config.constants import (
-    TRACK_COMPLAINT_BUTTON_LABEL,
-    TRACK_COMPLAINT_CARD_TEXT,
-    TRACK_COMPLAINT_CARD_TITLE,
-    TRACK_COMPLAINT_COMPLAINT_ID_LABEL,
-    TRACK_COMPLAINT_CONTACT_CARD_TITLE,
-    TRACK_COMPLAINT_CONTACT_DEPARTMENT_LABEL,
-    TRACK_COMPLAINT_CONTACT_EMAIL_LABEL,
-    TRACK_COMPLAINT_CONTACT_MOCK_NOTE,
-    TRACK_COMPLAINT_CONTACT_OFFICER_LABEL,
-    TRACK_COMPLAINT_CONTACT_PHONE_LABEL,
-    TRACK_COMPLAINT_CURRENT_STAGE_TAG,
-    TRACK_COMPLAINT_DATE_LABEL,
-    TRACK_COMPLAINT_DEPARTMENT_LABEL,
-    TRACK_COMPLAINT_EMPTY_ID_ICON,
-    TRACK_COMPLAINT_EMPTY_ID_TITLE,
-    TRACK_COMPLAINT_EMPTY_ID_WARNING,
-    TRACK_COMPLAINT_ESTIMATED_RESOLUTION_LABEL,
-    TRACK_COMPLAINT_EYEBROW,
-    TRACK_COMPLAINT_ID_INPUT_LABEL,
-    TRACK_COMPLAINT_ID_INPUT_PLACEHOLDER,
-    TRACK_COMPLAINT_LAST_UPDATED_LABEL,
-    TRACK_COMPLAINT_NOT_FOUND_ICON,
-    TRACK_COMPLAINT_NOT_FOUND_TITLE,
-    TRACK_COMPLAINT_NOT_FOUND_WARNING,
-    TRACK_COMPLAINT_PRIORITY_LABEL,
-    TRACK_COMPLAINT_REMARKS_CARD_TITLE,
-    TRACK_COMPLAINT_RESULT_CARD_TITLE,
-    TRACK_COMPLAINT_STATUS_LABEL,
-    TRACK_COMPLAINT_SUBTITLE,
-    TRACK_COMPLAINT_TIMELINE_CARD_TITLE,
-    TRACK_COMPLAINT_TITLE,
-)
+from frontend.utils.i18n import t
 
 # Session-state keys used to persist the last tracking query's result
 # across reruns, so it stays visible after the button click completes
@@ -410,17 +378,24 @@ def _build_vertical_timeline_html(stage_entries: list) -> str:
     Returns:
         A single-line-per-tag HTML string with no leading whitespace.
     """
+    # Canonical DISPLAY_STAGES labels (English) stay the internal
+    # lookup keys used by `_officer_remark_for_stage()` - only the
+    # on-screen text is translated, via this positional mapping.
+    display_stage_labels = dict(
+        zip(DISPLAY_STAGES, t("track_complaint.display_stage_labels"))
+    )
+
     row_parts = []
     for index, entry in enumerate(stage_entries):
         state = entry["state"]
-        label = html.escape(entry["label"])
+        label = html.escape(display_stage_labels.get(entry["label"], entry["label"]))
         timestamp = entry["timestamp"]
 
         current_tag = ""
         if state == "current":
             current_tag = (
                 f'<span class="gv-vtimeline-current-tag">'
-                f"{html.escape(TRACK_COMPLAINT_CURRENT_STAGE_TAG)}</span>"
+                f'{html.escape(t("track_complaint.current_stage_tag"))}</span>'
             )
 
         timestamp_html = ""
@@ -488,27 +463,27 @@ def _render_status_card(result: dict, active_entry: dict) -> None:
     info_grid_html = (
         '<div class="gv-info-grid">'
         '<div class="gv-info-item">'
-        f'<div class="gv-info-label">{TRACK_COMPLAINT_DATE_LABEL}</div>'
+        f'<div class="gv-info-label">{t("track_complaint.date_label")}</div>'
         f'<div class="gv-info-value">{tracked_date}</div>'
         "</div>"
         '<div class="gv-info-item">'
-        f'<div class="gv-info-label">{TRACK_COMPLAINT_DEPARTMENT_LABEL}</div>'
+        f'<div class="gv-info-label">{t("track_complaint.department_label")}</div>'
         f'<div class="gv-info-value">{department_badge}</div>'
         "</div>"
         '<div class="gv-info-item">'
-        f'<div class="gv-info-label">{TRACK_COMPLAINT_PRIORITY_LABEL}</div>'
+        f'<div class="gv-info-label">{t("track_complaint.priority_label")}</div>'
         f'<div class="gv-info-value">{priority_badge}</div>'
         "</div>"
         '<div class="gv-info-item">'
-        f'<div class="gv-info-label">{TRACK_COMPLAINT_ESTIMATED_RESOLUTION_LABEL}</div>'
+        f'<div class="gv-info-label">{t("track_complaint.estimated_resolution_label")}</div>'
         f'<div class="gv-info-value">{estimated_resolution}</div>'
         "</div>"
         '<div class="gv-info-item">'
-        f'<div class="gv-info-label">{TRACK_COMPLAINT_STATUS_LABEL}</div>'
+        f'<div class="gv-info-label">{t("track_complaint.status_label")}</div>'
         f'<div class="gv-info-value">{status_badge}</div>'
         "</div>"
         '<div class="gv-info-item">'
-        f'<div class="gv-info-label">{TRACK_COMPLAINT_LAST_UPDATED_LABEL}</div>'
+        f'<div class="gv-info-label">{t("track_complaint.last_updated_label")}</div>'
         f'<div class="gv-info-value">{last_updated_html}</div>'
         "</div>"
         "</div>"
@@ -517,15 +492,16 @@ def _render_status_card(result: dict, active_entry: dict) -> None:
     resolved_html = ""
     if status == STATUS_STAGES[-1]:  # "Resolved"
         confirmation_text = (
-            "Verified as resolved on "
+            t("track_complaint.resolved_confirmation_prefix")
+            + " "
             + datetime.now().strftime("%d %B %Y at %I:%M %p")
         )
         resolved_html = resolved_banner_html(confirmation_text)
 
     card_html = (
         '<div class="gv-card">'
-        f"<h3>{TRACK_COMPLAINT_RESULT_CARD_TITLE}</h3>"
-        f"<p><strong>{TRACK_COMPLAINT_COMPLAINT_ID_LABEL}:</strong> {complaint_id}</p>"
+        f'<h3>{t("track_complaint.result_card_title")}</h3>'
+        f'<p><strong>{t("track_complaint.complaint_id_label")}:</strong> {complaint_id}</p>'
         f"{info_grid_html}"
         f"{resolved_html}"
         "</div>"
@@ -542,7 +518,7 @@ def _render_timeline_card(stage_entries: list) -> None:
     """
     card_html = (
         '<div class="gv-card">'
-        f"<h3>{TRACK_COMPLAINT_TIMELINE_CARD_TITLE}</h3>"
+        f'<h3>{t("track_complaint.timeline_card_title")}</h3>'
         f"{_build_vertical_timeline_html(stage_entries)}"
         "</div>"
     )
@@ -558,7 +534,7 @@ def _render_remarks_card(stage_label: str) -> None:
     remark = html.escape(_officer_remark_for_stage(stage_label))
     card_html = (
         '<div class="gv-card">'
-        f"<h3>{TRACK_COMPLAINT_REMARKS_CARD_TITLE}</h3>"
+        f'<h3>{t("track_complaint.remarks_card_title")}</h3>'
         f"<p>{remark}</p>"
         "</div>"
     )
@@ -576,29 +552,29 @@ def _render_contact_card(department: str) -> None:
     info_grid_html = (
         '<div class="gv-info-grid">'
         '<div class="gv-info-item">'
-        f'<div class="gv-info-label">{TRACK_COMPLAINT_CONTACT_DEPARTMENT_LABEL}</div>'
+        f'<div class="gv-info-label">{t("track_complaint.contact_department_label")}</div>'
         f'<div class="gv-info-value">{html.escape(contact["department"])}</div>'
         "</div>"
         '<div class="gv-info-item">'
-        f'<div class="gv-info-label">{TRACK_COMPLAINT_CONTACT_OFFICER_LABEL}</div>'
+        f'<div class="gv-info-label">{t("track_complaint.contact_officer_label")}</div>'
         f'<div class="gv-info-value">{html.escape(contact["officer"])}</div>'
         "</div>"
         '<div class="gv-info-item">'
-        f'<div class="gv-info-label">{TRACK_COMPLAINT_CONTACT_PHONE_LABEL}</div>'
+        f'<div class="gv-info-label">{t("track_complaint.contact_phone_label")}</div>'
         f'<div class="gv-info-value">{html.escape(contact["phone"])}</div>'
         "</div>"
         '<div class="gv-info-item">'
-        f'<div class="gv-info-label">{TRACK_COMPLAINT_CONTACT_EMAIL_LABEL}</div>'
+        f'<div class="gv-info-label">{t("track_complaint.contact_email_label")}</div>'
         f'<div class="gv-info-value">{html.escape(contact["email"])}</div>'
         "</div>"
         "</div>"
     )
     card_html = (
         '<div class="gv-card">'
-        f"<h3>{TRACK_COMPLAINT_CONTACT_CARD_TITLE}</h3>"
+        f'<h3>{t("track_complaint.contact_card_title")}</h3>'
         f"{info_grid_html}"
         f'<p style="margin-top:0.9rem;margin-bottom:0;font-size:0.8rem;font-style:italic;">'
-        f"{html.escape(TRACK_COMPLAINT_CONTACT_MOCK_NOTE)}</p>"
+        f'{html.escape(t("track_complaint.contact_mock_note"))}</p>'
         "</div>"
     )
     st.write("")
@@ -631,16 +607,16 @@ def _render_tracking_result(result: dict) -> None:
 def render() -> None:
     """Renders the Track Complaint page."""
     page_header(
-        title=TRACK_COMPLAINT_TITLE,
-        subtitle=TRACK_COMPLAINT_SUBTITLE,
-        eyebrow=TRACK_COMPLAINT_EYEBROW,
+        title=t("track_complaint.title"),
+        subtitle=t("track_complaint.subtitle"),
+        eyebrow=t("track_complaint.eyebrow"),
     )
 
     st.markdown(
         f"""
         <div class="gv-card">
-            <h3>{TRACK_COMPLAINT_CARD_TITLE}</h3>
-            <p>{TRACK_COMPLAINT_CARD_TEXT}</p>
+            <h3>{t("track_complaint.card_title")}</h3>
+            <p>{t("track_complaint.card_text")}</p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -649,13 +625,13 @@ def render() -> None:
     st.write("")
 
     complaint_id_input = st.text_input(
-        label=TRACK_COMPLAINT_ID_INPUT_LABEL,
-        placeholder=TRACK_COMPLAINT_ID_INPUT_PLACEHOLDER,
+        label=t("track_complaint.id_input_label"),
+        placeholder=t("track_complaint.id_input_placeholder"),
         key="gv_track_complaint_id_input",
     )
 
     if st.button(
-        TRACK_COMPLAINT_BUTTON_LABEL,
+        t("track_complaint.button_label"),
         use_container_width=True,
         type="primary",
         key="gv_track_complaint_button",
@@ -664,31 +640,31 @@ def render() -> None:
 
         if not query_id:
             st.session_state[_TRACK_RESULT_KEY] = None
-            st.session_state[_TRACK_MESSAGE_KEY] = TRACK_COMPLAINT_EMPTY_ID_WARNING
+            st.session_state[_TRACK_MESSAGE_KEY] = t("track_complaint.empty_id_warning")
         else:
             registry = _get_registry()
             info = get_tracking_info(registry, query_id)
 
             if info is None:
                 st.session_state[_TRACK_RESULT_KEY] = None
-                st.session_state[_TRACK_MESSAGE_KEY] = TRACK_COMPLAINT_NOT_FOUND_WARNING
+                st.session_state[_TRACK_MESSAGE_KEY] = t("track_complaint.not_found_warning")
             else:
                 st.session_state[_TRACK_RESULT_KEY] = info
                 st.session_state[_TRACK_MESSAGE_KEY] = None
 
     message = st.session_state.get(_TRACK_MESSAGE_KEY)
-    if message == TRACK_COMPLAINT_NOT_FOUND_WARNING:
+    if message == t("track_complaint.not_found_warning"):
         st.write("")
         render_empty_state(
-            icon=TRACK_COMPLAINT_NOT_FOUND_ICON,
-            title=TRACK_COMPLAINT_NOT_FOUND_TITLE,
+            icon="🔍",
+            title=t("track_complaint.not_found_title"),
             text=message,
         )
-    elif message == TRACK_COMPLAINT_EMPTY_ID_WARNING:
+    elif message == t("track_complaint.empty_id_warning"):
         st.write("")
         render_empty_state(
-            icon=TRACK_COMPLAINT_EMPTY_ID_ICON,
-            title=TRACK_COMPLAINT_EMPTY_ID_TITLE,
+            icon="🪪",
+            title=t("track_complaint.empty_id_title"),
             text=message,
         )
     elif message:

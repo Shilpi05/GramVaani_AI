@@ -97,42 +97,11 @@ from frontend.components.theme import (
     priority_badge_html,
 )
 from frontend.config.constants import (
-    AUDIO_EMPTY_FILE_WARNING,
-    AUDIO_NO_FILE_WARNING,
-    AUDIO_NO_SPEECH_DETECTED_WARNING,
-    AUDIO_PROCESSING_MESSAGE,
     AUDIO_SUPPORTED_FORMATS,
-    AUDIO_TRANSCRIPTION_FAILED_ERROR,
-    AUDIO_UNSUPPORTED_FORMAT_ERROR,
-    AUDIO_UPLOADER_HELP,
-    AUDIO_UPLOADER_LABEL,
-    COMPLAINT_DEPARTMENT_LABEL,
-    COMPLAINT_EMPTY_TRANSCRIPT_WARNING,
-    COMPLAINT_FORMAL_TEXT_LABEL,
-    COMPLAINT_GENERATION_PROCESSING_MESSAGE,
-    COMPLAINT_ID_LABEL,
-    COMPLAINT_LANGUAGE_LABEL,
-    COMPLAINT_PRIORITY_LABEL,
-    COMPLAINT_RESULT_CARD_TITLE,
-    COMPLAINT_SUMMARY_LABEL,
-    COMPLAINT_TYPE_LABEL,
-    DOWNLOAD_COMPLAINT_BUTTON_LABEL,
-    EVIDENCE_ATTACHED_NOTE,
-    FILE_COMPLAINT_EYEBROW,
-    FILE_COMPLAINT_IMAGE_CARD_TEXT,
-    FILE_COMPLAINT_IMAGE_CARD_TITLE,
-    FILE_COMPLAINT_SUBTITLE,
-    FILE_COMPLAINT_TITLE,
-    FILE_COMPLAINT_VOICE_CARD_TEXT,
-    FILE_COMPLAINT_VOICE_CARD_TITLE,
-    GENERATE_COMPLAINT_BUTTON_LABEL,
     LANGUAGE_CODE_MAP,
     LANGUAGE_OPTIONS,
-    PDF_GENERATION_FAILED_ERROR,
-    PROCESS_AUDIO_BUTTON_LABEL,
-    SCHEME_NO_MATCH_MESSAGE,
-    TRANSCRIPT_CARD_TITLE,
 )
+from frontend.utils.i18n import t
 
 # Session-state keys used to persist results across reruns so they
 # stay visible after their respective button clicks complete.
@@ -159,17 +128,17 @@ def _handle_process_audio(uploaded_file, language_code: Optional[str]) -> None:
     """
     # --- Validation: no file uploaded ---
     if uploaded_file is None:
-        st.warning(AUDIO_NO_FILE_WARNING)
+        st.warning(t("file_complaint.audio_no_file_warning"))
         return
 
     # --- Validation: empty file ---
     if uploaded_file.size == 0:
-        st.warning(AUDIO_EMPTY_FILE_WARNING)
+        st.warning(t("file_complaint.audio_empty_file_warning"))
         return
 
     temp_audio_path: Optional[Path] = None
 
-    with st.spinner(AUDIO_PROCESSING_MESSAGE):
+    with st.spinner(t("file_complaint.audio_processing_message")):
         try:
             # Step 1: save the uploaded audio to a temporary file.
             # save_uploaded_audio() also validates the extension and
@@ -183,12 +152,12 @@ def _handle_process_audio(uploaded_file, language_code: Optional[str]) -> None:
         except ValueError:
             # Raised by save_uploaded_audio() for unsupported extensions
             # or empty file content.
-            st.error(AUDIO_UNSUPPORTED_FORMAT_ERROR)
+            st.error(t("file_complaint.audio_unsupported_format_error"))
             return
         except (FileNotFoundError, RuntimeError):
             # Raised by transcribe_audio() for missing files or any
             # Whisper/ffmpeg-level transcription failure.
-            st.error(AUDIO_TRANSCRIPTION_FAILED_ERROR)
+            st.error(t("file_complaint.audio_transcription_failed_error"))
             return
         finally:
             # Step 3: always clean up the temporary audio file,
@@ -197,7 +166,7 @@ def _handle_process_audio(uploaded_file, language_code: Optional[str]) -> None:
 
     # --- No speech detected in an otherwise valid audio file ---
     if not transcript:
-        st.warning(AUDIO_NO_SPEECH_DETECTED_WARNING)
+        st.warning(t("file_complaint.audio_no_speech_detected_warning"))
         st.session_state.pop(_TRANSCRIPT_STATE_KEY, None)
         return
 
@@ -223,15 +192,15 @@ def _handle_generate_complaint(transcript: Optional[str]) -> None:
     """
     # --- Validation: no transcript available yet ---
     if not transcript or not transcript.strip():
-        st.warning(COMPLAINT_EMPTY_TRANSCRIPT_WARNING)
+        st.warning(t("file_complaint.empty_transcript_warning"))
         return
 
-    with st.spinner(COMPLAINT_GENERATION_PROCESSING_MESSAGE):
+    with st.spinner(t("file_complaint.generation_processing_message")):
         try:
             complaint = generate_complaint(transcript)
         except ValueError:
             # Raised by generate_complaint() for an empty/blank transcript.
-            st.warning(COMPLAINT_EMPTY_TRANSCRIPT_WARNING)
+            st.warning(t("file_complaint.empty_transcript_warning"))
             return
         except Exception as exc:
             # DEBUG MODE: surface the full exception instead of a
@@ -282,7 +251,7 @@ def _handle_generate_complaint(transcript: Optional[str]) -> None:
         )
     except Exception:  # noqa: BLE001
         print(traceback.format_exc())
-        schemes = SCHEME_NO_MATCH_MESSAGE
+        schemes = t("file_complaint.scheme_no_match_message")
 
     st.session_state[SCHEMES_STATE_KEY] = schemes
 
@@ -302,7 +271,7 @@ def _render_transcript_if_available() -> None:
     st.markdown(
         f"""
         <div class="gv-card">
-            <h3>{TRANSCRIPT_CARD_TITLE}</h3>
+            <h3>{t("file_complaint.transcript_card_title")}</h3>
             <p>{safe_transcript}</p>
         </div>
         """,
@@ -312,7 +281,7 @@ def _render_transcript_if_available() -> None:
     # "Generate Complaint" only appears once a transcript exists.
     st.write("")
     if st.button(
-        GENERATE_COMPLAINT_BUTTON_LABEL,
+        t("file_complaint.generate_complaint_button_label"),
         use_container_width=True,
         type="primary",
         key="gv_generate_complaint_button",
@@ -346,20 +315,20 @@ def _render_complaint_result_if_available() -> None:
     if evidence:
         evidence_filename = html.escape(str(evidence.get("filename", "")))
         evidence_row = (
-            f"<p>{EVIDENCE_ATTACHED_NOTE} <strong>{evidence_filename}</strong></p>"
+            f'<p>{t("file_complaint.evidence_attached_note")} <strong>{evidence_filename}</strong></p>'
         )
 
     st.write("")
     st.markdown(
         f"""
         <div class="gv-card">
-            <h3>{COMPLAINT_RESULT_CARD_TITLE}</h3>
-            <p><strong>{COMPLAINT_ID_LABEL}:</strong> {complaint_id}</p>
-            <p><strong>{COMPLAINT_TYPE_LABEL}:</strong> {complaint_type}</p>
-            <p><strong>{COMPLAINT_DEPARTMENT_LABEL}:</strong> {department_badge}</p>
-            <p><strong>{COMPLAINT_PRIORITY_LABEL}:</strong> {priority_badge}</p>
-            <p><strong>{COMPLAINT_SUMMARY_LABEL}:</strong> {summary}</p>
-            <p><strong>{COMPLAINT_FORMAL_TEXT_LABEL}:</strong><br>{formal_complaint}</p>
+            <h3>{t("file_complaint.result_card_title")}</h3>
+            <p><strong>{t("file_complaint.complaint_id_label")}:</strong> {complaint_id}</p>
+            <p><strong>{t("file_complaint.complaint_type_label")}:</strong> {complaint_type}</p>
+            <p><strong>{t("file_complaint.department_label")}:</strong> {department_badge}</p>
+            <p><strong>{t("file_complaint.priority_label")}:</strong> {priority_badge}</p>
+            <p><strong>{t("file_complaint.summary_label")}:</strong> {summary}</p>
+            <p><strong>{t("file_complaint.formal_text_label")}:</strong><br>{formal_complaint}</p>
             {evidence_row}
         </div>
         """,
@@ -420,7 +389,7 @@ def _render_download_button_if_available() -> None:
         )
     except Exception:  # noqa: BLE001
         print(traceback.format_exc())
-        st.error(PDF_GENERATION_FAILED_ERROR)
+        st.error(t("file_complaint.pdf_generation_failed_error"))
         return
 
     complaint_id = str(complaint.get("complaint_id", "")).strip()
@@ -428,7 +397,7 @@ def _render_download_button_if_available() -> None:
 
     st.write("")
     st.download_button(
-        label=DOWNLOAD_COMPLAINT_BUTTON_LABEL,
+        label=t("file_complaint.download_button_label"),
         data=pdf_bytes,
         file_name=file_name,
         mime="application/pdf",
@@ -442,9 +411,9 @@ def _render_download_button_if_available() -> None:
 def render() -> None:
     """Renders the File Complaint page."""
     page_header(
-        title=FILE_COMPLAINT_TITLE,
-        subtitle=FILE_COMPLAINT_SUBTITLE,
-        eyebrow=FILE_COMPLAINT_EYEBROW,
+        title=t("file_complaint.title"),
+        subtitle=t("file_complaint.subtitle"),
+        eyebrow=t("file_complaint.eyebrow"),
     )
 
     col_left, col_right = st.columns(2)
@@ -453,8 +422,8 @@ def render() -> None:
         st.markdown(
             f"""
             <div class="gv-card">
-                <h3>{FILE_COMPLAINT_VOICE_CARD_TITLE}</h3>
-                <p>{FILE_COMPLAINT_VOICE_CARD_TEXT}</p>
+                <h3>{t("file_complaint.voice_card_title")}</h3>
+                <p>{t("file_complaint.voice_card_text")}</p>
             </div>
             """,
             unsafe_allow_html=True,
@@ -463,22 +432,31 @@ def render() -> None:
         st.write("")
 
         # --- Speech-to-Text: language choice + audio uploader + process button ---
+        # `options`/the returned value stay the canonical English
+        # strings from LANGUAGE_OPTIONS (also used by
+        # `frontend/pages/settings.py` via the shared
+        # "gv_complaint_language" session-state key) - only the
+        # on-screen label is translated, via `format_func`, so the
+        # stored preference remains valid regardless of interface
+        # language.
+        language_option_labels = t("file_complaint.language_option_labels")
         selected_language_label = st.radio(
-            label=COMPLAINT_LANGUAGE_LABEL,
+            label=t("file_complaint.language_label"),
             options=LANGUAGE_OPTIONS,
+            format_func=lambda option: language_option_labels.get(option, option),
             horizontal=True,
             key="gv_complaint_language",
         )
 
         uploaded_audio = st.file_uploader(
-            label=AUDIO_UPLOADER_LABEL,
+            label=t("file_complaint.audio_uploader_label"),
             type=AUDIO_SUPPORTED_FORMATS,
-            help=AUDIO_UPLOADER_HELP,
+            help=t("file_complaint.audio_uploader_help"),
             key="gv_audio_uploader",
         )
 
         if st.button(
-            PROCESS_AUDIO_BUTTON_LABEL,
+            t("file_complaint.process_audio_button_label"),
             use_container_width=True,
             type="primary",
             key="gv_process_audio_button",
@@ -490,8 +468,8 @@ def render() -> None:
         st.markdown(
             f"""
             <div class="gv-card">
-                <h3>{FILE_COMPLAINT_IMAGE_CARD_TITLE}</h3>
-                <p>{FILE_COMPLAINT_IMAGE_CARD_TEXT}</p>
+                <h3>{t("file_complaint.image_card_title")}</h3>
+                <p>{t("file_complaint.image_card_text")}</p>
             </div>
             """,
             unsafe_allow_html=True,

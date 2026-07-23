@@ -29,20 +29,9 @@ import html
 import streamlit as st
 
 from frontend.components.theme import department_badge_html, page_header
-from frontend.config.constants import (
-    SCHEME_DEPARTMENT_LABEL,
-    SCHEME_ELIGIBILITY_LABEL,
-    SCHEME_FINDER_CARD_TEXT,
-    SCHEME_FINDER_CARD_TITLE,
-    SCHEME_FINDER_EMPTY_STATE_BUTTON_LABEL,
-    SCHEME_FINDER_EMPTY_STATE_TEXT,
-    SCHEME_FINDER_EYEBROW,
-    SCHEME_FINDER_SUBTITLE,
-    SCHEME_FINDER_TITLE,
-    SCHEME_RECOMMENDATION_CARD_TITLE,
-)
 from frontend.pages.file_complaint import SCHEMES_STATE_KEY
 from frontend.utils.helpers import navigate_to
+from frontend.utils.i18n import t
 
 
 def _render_schemes(schemes) -> None:
@@ -66,7 +55,7 @@ def _render_schemes(schemes) -> None:
         st.markdown(
             f"""
             <div class="gv-card">
-                <h3>{SCHEME_RECOMMENDATION_CARD_TITLE}</h3>
+                <h3>{t("scheme_finder.recommendation_card_title")}</h3>
                 <p>{html.escape(schemes)}</p>
             </div>
             """,
@@ -75,7 +64,7 @@ def _render_schemes(schemes) -> None:
         return
 
     st.markdown(
-        f"<h3 class='gv-section-title'>{SCHEME_RECOMMENDATION_CARD_TITLE}</h3>",
+        f"<h3 class='gv-section-title'>{t('scheme_finder.recommendation_card_title')}</h3>",
         unsafe_allow_html=True,
     )
 
@@ -92,8 +81,8 @@ def _render_schemes(schemes) -> None:
             <div class="gv-card gv-scheme-card">
                 <h3>🏛 {name}</h3>
                 <p>{description}</p>
-                <p><strong>{SCHEME_ELIGIBILITY_LABEL}:</strong> {eligibility}</p>
-                <p><strong>{SCHEME_DEPARTMENT_LABEL}:</strong> {department_badge}</p>
+                <p><strong>{t("scheme_finder.eligibility_label")}:</strong> {eligibility}</p>
+                <p><strong>{t("scheme_finder.department_label")}:</strong> {department_badge}</p>
             </div>
             """,
             unsafe_allow_html=True,
@@ -110,7 +99,7 @@ def _render_empty_state() -> None:
         f"""
         <div class="gv-placeholder-card">
             <div class="gv-placeholder-icon">🎯</div>
-            <p>{SCHEME_FINDER_EMPTY_STATE_TEXT}</p>
+            <p>{t("scheme_finder.empty_state_text")}</p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -120,7 +109,7 @@ def _render_empty_state() -> None:
     _, center_col, _ = st.columns([1, 1, 1])
     with center_col:
         if st.button(
-            SCHEME_FINDER_EMPTY_STATE_BUTTON_LABEL,
+            t("scheme_finder.empty_state_button_label"),
             use_container_width=True,
             type="primary",
             key="gv_scheme_finder_file_complaint_cta",
@@ -131,16 +120,16 @@ def _render_empty_state() -> None:
 def render() -> None:
     """Renders the Scheme Finder page."""
     page_header(
-        title=SCHEME_FINDER_TITLE,
-        subtitle=SCHEME_FINDER_SUBTITLE,
-        eyebrow=SCHEME_FINDER_EYEBROW,
+        title=t("scheme_finder.title"),
+        subtitle=t("scheme_finder.subtitle"),
+        eyebrow=t("scheme_finder.eyebrow"),
     )
 
     st.markdown(
         f"""
         <div class="gv-card">
-            <h3>{SCHEME_FINDER_CARD_TITLE}</h3>
-            <p>{SCHEME_FINDER_CARD_TEXT}</p>
+            <h3>{t("scheme_finder.card_title")}</h3>
+            <p>{t("scheme_finder.card_text")}</p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -153,4 +142,3 @@ def render() -> None:
         _render_empty_state()
     else:
         _render_schemes(schemes)
-        
