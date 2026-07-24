@@ -67,14 +67,13 @@ def render_sidebar() -> str:
         )
         st.divider()
 
-        # Navigation buttons
+        # Navigation buttons - text-only labels (no icon prefix).
         for item in NAV_ITEMS:
             is_active = st.session_state["current_page"] == item["key"]
             nav_label = t("nav." + item["key"])
-            button_label = f"{item['icon']}  {nav_label}"
 
             if st.button(
-                button_label,
+                nav_label,
                 key=f"nav_{item['key']}",
                 use_container_width=True,
                 type="primary" if is_active else "secondary",

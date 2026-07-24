@@ -2,158 +2,161 @@
 
 **One Voice. One Platform. Better Governance.**
 
-An AI-powered, multilingual public governance platform for India.
-Citizens will be able to file complaints by voice, upload issue
-photos, discover government schemes, and track complaint status.
-
-> **Current stage:** UI skeleton only. No AI, no backend logic, no
-> external APIs are wired in yet. This repository is structured so
-> those pieces can be added later without restructuring.
+An AI-powered, bilingual (English/Hindi) civic complaint platform. A citizen
+speaks a complaint in their own language; the app transcribes it, drafts a
+formal grievance, matches it against relevant government schemes, and gives
+the citizen a trackable Complaint ID — no login, no form-filling, no
+database.
 
 [![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://gramvaani-ai.streamlit.app/)
----
-
-## 1. Project Overview
-
-GramVaani AI aims to lower the barrier between citizens and public
-services by letting people interact in their own language and voice,
-rather than navigating complex government forms and portals.
-
-Planned capabilities (not yet implemented):
-
-| Module          | What it will do                                |
-| --------------- | ---------------------------------------------- |
-| File Complaint  | Voice + photo based complaint registration     |
-| Scheme Finder   | Personalized government scheme recommendations |
-| Track Complaint | Real-time complaint status tracking            |
 
 ---
 
-## 2. Folder Structure
+## Features
+
+| Capability                     | How it works                                                                                                                                                                                                                            |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Voice-to-text**              | Citizen uploads a WAV/MP3/M4A recording; OpenAI **Whisper** transcribes it, with automatic language detection.                                                                                                                          |
+| **AI complaint drafting**      | The transcript is sent to **Groq** (`llama-3.3-70b-versatile`, falling back to `llama-3.1-8b-instant`), which returns a structured complaint: type, responsible department, priority, summary, and a formal letter body.                |
+| **Evidence photos**            | Citizen can attach a JPG/PNG photo (e.g. a pothole) alongside the voice complaint. Saved locally, previewed, size/type validated.                                                                                                       |
+| **Government scheme matching** | The complaint is matched offline, via keyword rules, against a local knowledge base of 25 Indian government schemes across 8 categories (Sanitation, Water Supply, Roads, Electricity, Sewage, Street Lights, Public Health, Drainage). |
+| **Complaint ID & PDF export**  | Every complaint gets a unique ID (`GV-YYYYMMDD-NNNNN`) and can be downloaded as a formatted PDF.                                                                                                                                        |
+| **Status tracking**            | A citizen can look up a Complaint ID and see a progress timeline (Submitted → Under Review → Assigned → Resolved), priority, department, and an estimated resolution window.                                                            |
+| **Settings**                   | Application language, preferred complaint language, auto-delete for uploaded files, and Clear Session / Restore Defaults.                                                                                                               |
+| **Bilingual interface**        | The full interface, not just complaint content, is available in English and Hindi and switches instantly from Settings.                                                                                                                 |
+
+Image classification (`ai/vision`) and speech translation (`ai/translation`)
+are scoped but not yet implemented.
+
+There is no database and no user accounts. Every complaint, scheme match,
+and tracking record lives in `st.session_state` for the length of the
+browser session.
+
+---
+
+## Tech stack
+
+| Layer                | Technology                                                                  |
+| -------------------- | --------------------------------------------------------------------------- |
+| UI framework         | [Streamlit](https://streamlit.io)                                           |
+| Speech-to-text       | [OpenAI Whisper](https://github.com/openai/whisper) (local inference)       |
+| Complaint generation | [Groq](https://groq.com) API (Llama 3.3 / 3.1)                              |
+| PDF generation       | [ReportLab](https://www.reportlab.com/)                                     |
+| Scheme matching      | Local, offline keyword-rule engine                                          |
+| State                | `st.session_state` only — no database                                       |
+| Config               | `.env` (Groq key, model selection) + `.streamlit/config.toml` (fixed theme) |
+
+---
+
+## Project structure
 
 ```
-GRAMVAANI_AI/
-├── app.py                        # Entry point - configuration + routing only
+GramVaani_AI/
+├── app.py                          # Entry point - page config + routing only
 │
-├── frontend/                     # Everything UI-related
-│   ├── pages/                    # One file per screen, each exposing render()
+├── frontend/
+│   ├── pages/                      # One file per screen, each exposing render()
 │   │   ├── home.py
-│   │   ├── file_complaint.py
-│   │   ├── scheme_finder.py
-│   │   ├── track_complaint.py
-│   │   └── settings.py
-│   ├── components/                # Reusable UI building blocks
-│   │   ├── sidebar.py             # Navigation rendering
-│   │   └── theme.py                # Colors, typography, spacing, CSS, helpers
+│   │   ├── file_complaint.py       # Voice + evidence upload + AI drafting
+│   │   ├── scheme_finder.py        # Displays schemes matched during complaint generation
+│   │   ├── track_complaint.py      # Complaint ID lookup + status timeline
+│   │   └── settings.py             # Language, preferences, session controls
+│   ├── components/
+│   │   ├── sidebar.py              # Navigation (bilingual via i18n)
+│   │   ├── theme.py                # Design tokens, global CSS, shared UI helpers
+│   │   └── evidence_uploader.py    # Reusable photo-upload widget
 │   ├── config/
-│   │   └── constants.py           # ALL static text, labels, nav items, version
-│   ├── utils/
-│   │   └── helpers.py             # Shared stateless helper functions (future)
-│   └── assets/
-│       ├── logo/                  # Brand logo files (future)
-│       └── icons/                 # Custom icon files (future)
+│   │   └── constants.py            # Static, non-translatable config (nav structure, defaults)
+│   └── utils/
+│       ├── i18n.py                 # Centralized EN/HI translation table + t() helper
+│       └── helpers.py              # Shared stateless helpers (e.g. page navigation)
 │
-├── ai/                            # Future AI modules (documentation only)
-│   ├── speech/                    # Speech-to-text / text-to-speech
-│   ├── vision/                    # Image classification for complaints
-│   ├── translation/               # Multilingual translation
-│   ├── llm/                       # Scheme recommendation, summarization
-│   └── prompts/                   # Prompt template library
+├── ai/                              # Framework-agnostic business logic (no Streamlit imports)
+│   ├── speech/                      # Whisper transcription
+│   ├── llm/                         # Groq complaint generation
+│   ├── schemes/                     # Offline scheme matching
+│   ├── utils/                       # Complaint ID, PDF export, mock tracking
+│   ├── vision/                      # Image classification - planned
+│   ├── translation/                 # Speech translation - planned
+│   └── prompts/                     # Shared prompt library - planned
 │
-├── backend/                       # Future backend modules (documentation only)
-│   ├── services/                  # Business logic layer
-│   ├── database/                  # DB connection, schema, queries
-│   ├── models/                    # Data models / schemas
-│   └── api/                       # Optional HTTP API layer
-│
-├── data/                          # Future datasets (schemes, sample records)
-├── docs/                          # Project documentation
-├── uploads/                       # Future user-uploaded files (audio, images)
-├── resources/                     # Misc supporting resources
 ├── requirements.txt
-└── .env
+├── .env.example
+└── .streamlit/config.toml           # Pinned light theme (brand colors)
 ```
+
+Pages never call Groq or Whisper directly — they call into `ai/`, which has
+no knowledge that Streamlit exists.
 
 ---
 
-## 3. Installation
+## Architecture
+
+```
+Citizen's voice
+     │
+     ▼
+Whisper (ai/speech)        →  transcript
+     │
+     ▼
+Groq LLM (ai/llm)           →  structured complaint (type, department,
+     │                          priority, summary, formal text)
+     ▼
+ai/utils                    →  Complaint ID, PDF, tracking status
+ai/schemes                  →  matched government schemes
+     │
+     ▼
+st.session_state            →  read back by whichever page the citizen
+                                navigates to next
+```
+
+The frontend (`frontend/pages`, `components`, `utils/i18n.py`) only handles
+UI, routing, and translation. All business logic lives in `ai/`, and `ai/`
+has no dependency on Streamlit.
+
+---
+
+## Setup
 
 ```bash
 git clone <repository-url>
-cd GRAMVAANI_AI
+cd GramVaani_AI
 python -m venv venv
 source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
+cp .env.example .env
 ```
 
----
+Add your Groq API key to `.env`:
 
-## 4. Running the Project
+```
+GROQ_API_KEY=your_groq_api_key_here
+```
+
+Optional overrides in `.env.example`: model selection, Whisper model size,
+request timeout/retries.
+
+## Running
 
 ```bash
 streamlit run app.py
 ```
 
-The app will open at `http://localhost:8501`.
+Opens at `http://localhost:8501`.
 
 ---
 
-## 5. Architecture Diagram
+## Contributing
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                        app.py                            │
-│        (page config → theme → sidebar → routing)         │
-└───────────────┬───────────────────────┬──────────────────┘
-                │                       │
-                ▼                       ▼
-    ┌────────────────────┐   ┌───────────────────────┐
-    │ frontend/components │   │   frontend/pages       │
-    │  - sidebar.py        │   │   - home.py            │
-    │  - theme.py           │  │   - file_complaint.py  │
-    └──────────┬───────────┘   │   - scheme_finder.py   │
-               │                │   - track_complaint.py │
-               ▼                │   - settings.py        │
-    ┌────────────────────┐     └───────────┬────────────┘
-    │ frontend/config      │                 │
-    │  - constants.py       │◄───────────────┘
-    └────────────────────┘
-               (all pages import text/labels from here)
-
-    ── Not yet wired in ──────────────────────────────────
-    frontend/pages/*  --->  backend/services  --->  backend/database
-    frontend/pages/*  --->  ai/speech, ai/vision, ai/translation, ai/llm
-```
-
----
-
-## 6. Future Modules
-
-- **`ai/speech`** — voice-to-text for complaint filing.
-- **`ai/vision`** — image classification for uploaded complaint photos.
-- **`ai/translation`** — multilingual UI/content translation.
-- **`ai/llm`** — scheme recommendation and complaint summarization.
-- **`ai/prompts`** — prompt templates consumed by `ai/llm`.
-- **`backend/services`** — business logic orchestration.
-- **`backend/database`** — persistence layer.
-- **`backend/models`** — shared data models.
-- **`backend/api`** — optional external HTTP API.
-
-Each of the folders above currently contains only a `README.md`
-describing its purpose, expected input/output, and how it will
-eventually connect to the frontend - no implementation yet.
-
----
-
-## 7. Contributing
-
-1. Keep `app.py` thin — configuration and routing only.
-2. New pages: add a file to `frontend/pages/` exposing a single
-   `render()` function, then register it in `app.py`'s `PAGE_ROUTER`
-   and in `NAV_ITEMS` inside `frontend/config/constants.py`.
-3. Never hardcode user-facing text in a page file — add it to
-   `frontend/config/constants.py` instead.
-4. Never hardcode colors/spacing in a page file — use the helpers
-   and CSS classes provided by `frontend/components/theme.py`.
-5. Follow PEP8, include docstrings and type hints on all new
-   functions.
+- Keep `app.py` thin — configuration and routing only.
+- New pages: add a file to `frontend/pages/` with a single `render()`
+  function, then register it in `app.py`'s `PAGE_ROUTER` and in
+  `NAV_ITEMS` in `frontend/config/constants.py`.
+- All interface text goes through `t("key")` from `frontend/utils/i18n.py`,
+  with both an `en` and `hi` entry. This doesn't apply to AI-generated
+  complaint content, scheme names, or department names — those are data,
+  not interface copy.
+- Business logic belongs in `ai/`, not in a page file.
+- Use the tokens and CSS classes in `frontend/components/theme.py` rather
+  than hardcoding colors or spacing.
+- Follow PEP8; include docstrings and type hints on new functions.
