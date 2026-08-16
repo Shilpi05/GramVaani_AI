@@ -1,132 +1,237 @@
 """
 speech_service.py
 --------------------
-Core Speech-to-Text service for GramVaani AI.
+Core Speech-to-Text service for GramVaani AI - built on Groq's hosted
+Whisper API (`client.audio.transcriptions.create`), reached through
+the exact same `groq` Python SDK and `GROQ_API_KEY` already used by
+`ai/llm/complaint_generator.py`.
+
+Self-hosted `openai-whisper` has been completely removed from this
+module. Running Whisper locally pulled in the full `torch` + CUDA
+dependency stack (useless on a CPU-only host like Streamlit Community
+Cloud) and required downloading a 461MB-1.4GB model file on every
+cold start, which was exceeding that platform's free-tier memory
+limit and causing deploy crashes. Groq hosts Whisper itself, so this
+module now sends the audio file to Groq's API instead of loading any
+model into this process at all - there is no model download, and no
+model-sized memory footprint here anymore.
 
 Responsibilities:
-    - Load and cache the Whisper model
-    - Accept an audio file path
+    - Load the Groq API key from .env (shared with
+      ai/llm/complaint_generator.py)
+    - Send an audio file to Groq's hosted Whisper endpoint
     - Return the transcribed text
+
+Public API (unchanged from the previous local-Whisper implementation,
+so no frontend code needs to change):
+    transcribe_audio(audio_path, language=None) -> str
 
 This module is intentionally framework-agnostic (no Streamlit
 imports) so it can be reused outside the UI later - e.g. from
 `backend/services` or a future API layer - without modification.
+
+Configuration (all read from .env via python-dotenv):
+    GROQ_API_KEY            - required. No default; raises a clean
+                               RuntimeError if missing. The same key
+                               ai/llm/complaint_generator.py uses.
+    GROQ_WHISPER_MODEL       - optional. Defaults to
+                               "whisper-large-v3-turbo" if unset or
+                               blank (Groq's recommended choice for
+                               multilingual price/performance - see
+                               https://console.groq.com/docs/speech-to-text).
+                               Use "whisper-large-v3" instead for
+                               maximum accuracy over speed.
+    GROQ_TIMEOUT_SECONDS     - optional, defaults to 30. Shared with
+                               ai/llm/complaint_generator.py - one
+                               .env value controls both.
+    GROQ_RETRY_ATTEMPTS      - optional, defaults to 3. Shared with
+                               ai/llm/complaint_generator.py.
+
+Note: Groq's free tier caps audio file size at 25MB per request (100MB
+on paid tiers) - see https://console.groq.com/docs/speech-to-text.
 """
 
+import logging
 import os
+import threading
 from functools import lru_cache
 from pathlib import Path
-from typing import Optional, Union
+from typing import Any, Dict, Optional, Union
 
 from dotenv import load_dotenv
-import whisper
+from groq import Groq
 
-# Load variables from a local .env file (e.g. WHISPER_MODEL) into
-# the process environment, if one exists. Safe no-op if it doesn't.
+# Load variables from a local .env file (e.g. GROQ_API_KEY) into the
+# process environment, if one exists. Safe no-op if it doesn't -
+# ai/llm/complaint_generator.py also calls this; python-dotenv's
+# load_dotenv() is idempotent, so calling it from both modules is
+# harmless regardless of import order.
 load_dotenv()
 
 # ----------------------------------------------------------------------
-# Model configuration
+# Logging
 # ----------------------------------------------------------------------
-# The Whisper model size is configurable via the WHISPER_MODEL
-# environment variable (see .env), so it can be tuned per-environment
-# without touching code. Defaults to "small" when unset - a better
-# balance of Hindi transcription accuracy than "base", while still
-# being reasonably fast on CPU.
-#
-# Example .env entry:
-#     WHISPER_MODEL=small
-#
-# Other valid values: "tiny", "base", "small", "medium", "large".
-#
-# NOTE: os.getenv(name, default) only falls back to `default` when
-# the variable is completely UNSET. If it's present in .env but
-# blank (e.g. "WHISPER_MODEL="), it returns "" instead - which would
-# make whisper.load_model("") fail. Guard against that explicitly.
-_raw_model_size = os.getenv("WHISPER_MODEL", "").strip()
-WHISPER_MODEL_SIZE: str = _raw_model_size if _raw_model_size else "small"
+logger = logging.getLogger("gramvaani.ai.speech.speech_service")
+if not logger.handlers:
+    _handler = logging.StreamHandler()
+    _handler.setFormatter(
+        logging.Formatter("[%(asctime)s] %(levelname)s %(name)s: %(message)s")
+    )
+    logger.addHandler(_handler)
+    logger.setLevel(logging.INFO)
+
+
+def _env_or_default(name: str, default: str) -> str:
+    """
+    Reads an environment variable, falling back to `default` if the
+    variable is either completely unset OR present but blank/
+    whitespace-only (e.g. `GROQ_WHISPER_MODEL=` with nothing after
+    the `=` in `.env`).
+
+    Plain `os.getenv(name, default)` does NOT handle the blank case -
+    if the variable exists with an empty value, it returns "" instead
+    of `default`. Mirrors the identical helper in
+    `ai/llm/complaint_generator.py` (duplicated here rather than
+    shared, since each ai/ submodule is kept standalone/importable on
+    its own).
+
+    Args:
+        name: Environment variable name to read.
+        default: Value to use if the variable is unset or blank.
+
+    Returns:
+        The trimmed environment value, or `default`.
+    """
+    value = os.getenv(name, "").strip()
+    return value if value else default
+
+
+# ----------------------------------------------------------------------
+# Configuration
+# ----------------------------------------------------------------------
+GROQ_TIMEOUT_SECONDS: int = int(_env_or_default("GROQ_TIMEOUT_SECONDS", "30"))
+GROQ_RETRY_ATTEMPTS: int = int(_env_or_default("GROQ_RETRY_ATTEMPTS", "3"))
+GROQ_WHISPER_MODEL: str = _env_or_default(
+    "GROQ_WHISPER_MODEL", "whisper-large-v3-turbo"
+)
 
 
 @lru_cache(maxsize=1)
-def _load_model(model_size: str = WHISPER_MODEL_SIZE) -> "whisper.Whisper":
+def _get_client() -> "Groq":
     """
-    Loads the Whisper model, caching it in memory so repeated
-    transcription calls do not reload the model from disk each time.
-
-    Args:
-        model_size: Whisper model variant to load
-            (e.g. "tiny", "base", "small", "medium", "large").
-            Defaults to the WHISPER_MODEL_SIZE resolved from the
-            WHISPER_MODEL environment variable.
+    Builds and caches a single Groq client for the lifetime of the
+    process - the exact same construction pattern
+    `ai/llm/complaint_generator.py` uses for its own client.
 
     Returns:
-        A loaded Whisper model instance.
+        A configured `Groq` client instance.
 
     Raises:
-        RuntimeError: If the model fails to load (e.g. invalid model
-            name, corrupted download, insufficient disk/memory).
+        RuntimeError: If `GROQ_API_KEY` is not set.
     """
-    try:
-        return whisper.load_model(model_size)
-    except Exception as exc:
+    api_key = _env_or_default("GROQ_API_KEY", "")
+    if not api_key:
+        logger.error("GROQ_API_KEY is not set - cannot create Groq client.")
         raise RuntimeError(
-            f"Failed to load Whisper model '{model_size}': {exc}"
-        ) from exc
+            "GROQ_API_KEY environment variable is not set. "
+            "Add it to your .env file to enable speech-to-text."
+        )
+
+    return Groq(
+        api_key=api_key,
+        timeout=GROQ_TIMEOUT_SECONDS,
+        max_retries=GROQ_RETRY_ATTEMPTS,
+    )
 
 
 def transcribe_audio(audio_path: Union[str, Path], language: Optional[str] = None) -> str:
     """
-    Transcribes an audio file into text using Whisper.
+    Transcribes an audio file into text using Groq's hosted Whisper
+    API.
 
     Args:
         audio_path: Path to a local audio file (.wav, .mp3, .m4a).
-        language: Optional Whisper language code to force
+        language: Optional ISO-639-1 language code to force
             transcription in a specific language (e.g. "hi" for
             Hindi, "en" for English). If None, Whisper auto-detects
             the spoken language instead. Passing the correct
             language explicitly is faster and more accurate than
-            auto-detection.
+            auto-detection - identical behavior to the previous
+            local-Whisper implementation.
 
     Returns:
-        The recognized speech as plain text. Returns an empty
-        string if Whisper detects no speech in the audio.
+        The recognized speech as plain text. Returns an empty string
+        if Whisper detects no speech in the audio.
 
     Raises:
         FileNotFoundError: If the audio file does not exist on disk.
-        RuntimeError: If the model fails to load, or if transcription
-            fails for any other reason (corrupt audio, unsupported
-            codec, model error, etc.).
+        RuntimeError: If the API key is missing, the request times
+            out, or transcription fails for any other reason (corrupt
+            audio, unsupported codec, network/API error, etc.). This
+            matches the previous local-Whisper implementation's error
+            contract exactly, so callers do not need to change.
     """
     audio_path = Path(audio_path)
 
     if not audio_path.exists():
         raise FileNotFoundError(f"Audio file not found: {audio_path}")
 
-    try:
-        model = _load_model()
-        # fp16=False: forces stable FP32 decoding (this app runs on
-        #   CPU, where FP16 is unsupported and silently falls back
-        #   anyway - being explicit avoids inconsistent precision).
-        # temperature=0.0: deterministic decoding: reduces the model
-        #   inventing plausible-sounding but wrong words on quiet,
-        #   short, or noisy audio ("hallucination").
-        # condition_on_previous_text=False: stops one hallucinated
-        #   segment from biasing/compounding into the next one.
-        result = model.transcribe(
-            str(audio_path),
-            language=language,
-            fp16=False,
-            temperature=0.0,
-            condition_on_previous_text=False,
+    client = _get_client()
+
+    # NOTE: passing timeout=/max_retries= to the Groq client above is
+    # the documented way to get bounded retries and a timeout - but
+    # ai/llm/complaint_generator.py's own history on this exact
+    # project found that relying solely on an SDK's own timeout can
+    # still hang past it in practice. The same daemon-thread hard
+    # timeout used there is used here for the same reason: it
+    # guarantees this call returns control within GROQ_TIMEOUT_SECONDS
+    # no matter what the SDK/network does internally.
+    call_result: Dict[str, Any] = {}
+
+    def _run_transcription_call() -> None:
+        try:
+            with open(audio_path, "rb") as audio_file:
+                call_result["response"] = client.audio.transcriptions.create(
+                    file=audio_file,
+                    model=GROQ_WHISPER_MODEL,
+                    language=language,
+                    response_format="text",
+                    temperature=0.0,
+                )
+        except Exception as thread_exc:  # noqa: BLE001
+            call_result["error"] = thread_exc
+
+    worker = threading.Thread(target=_run_transcription_call, daemon=True)
+    worker.start()
+    worker.join(timeout=GROQ_TIMEOUT_SECONDS)
+
+    if worker.is_alive():
+        logger.error(
+            "Groq transcription using model '%s' did not respond within "
+            "%d second(s).",
+            GROQ_WHISPER_MODEL,
+            GROQ_TIMEOUT_SECONDS,
         )
-    except RuntimeError:
-        # Raised by _load_model() for a model-loading failure -
-        # re-raise as-is so the message stays specific to loading.
-        raise
-    except Exception as exc:
-        # Wrap any Whisper/ffmpeg-level failure in a clean, catchable
-        # error so the calling UI layer can display a friendly message.
+        raise RuntimeError(
+            f"Speech transcription did not respond within "
+            f"{GROQ_TIMEOUT_SECONDS} seconds. This usually means a "
+            "network, firewall, or proxy issue is blocking access to "
+            "Groq's API - check your internet connection and try again."
+        )
+
+    if "error" in call_result:
+        exc = call_result["error"]
+        logger.error(
+            "Groq transcription failed using model '%s': %s",
+            GROQ_WHISPER_MODEL,
+            exc,
+        )
         raise RuntimeError(f"Speech transcription failed: {exc}") from exc
 
-    transcript = result.get("text", "").strip()
-    return transcript
+    response = call_result.get("response")
+    # response_format="text" returns a plain string on current SDK
+    # versions; fall back to a `.text` attribute defensively in case
+    # a future SDK version wraps it in an object instead.
+    transcript = response if isinstance(response, str) else getattr(response, "text", "")
+
+    return transcript.strip()

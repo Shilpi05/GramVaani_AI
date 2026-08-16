@@ -1,10 +1,14 @@
 streamlit>=1.36.0
 
 # Speech-to-Text (ai/speech module)
-openai-whisper>=20231117
+# Uses Groq's hosted Whisper API (same SDK/key as complaint
+# generation below) instead of self-hosted openai-whisper. This
+# removes the torch/CUDA dependency chain and the model-download
+# memory pressure that was crashing deploys on Streamlit Community
+# Cloud's free tier.
 
 # Complaint Generation (ai/llm module)
-# Uses Groq's official Python SDK for LLM inference.
+# Uses Groq's official Python SDK for LLM inference AND Speech-to-Text.
 # Google Gemini (google-generativeai / google-genai) has been fully
 # removed from this project.
 groq>=0.11.0

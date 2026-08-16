@@ -122,7 +122,7 @@ has no dependency on Streamlit.
 git clone <repository-url>
 cd GramVaani_AI
 python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
+venv\Scripts\activate   #Linux : source venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
 ```
