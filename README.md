@@ -2,11 +2,7 @@
 
 **One Voice. One Platform. Better Governance.**
 
-An AI-powered, bilingual (English/Hindi) civic complaint platform. A citizen
-speaks a complaint in their own language; the app transcribes it, drafts a
-formal grievance, matches it against relevant government schemes, and gives
-the citizen a trackable Complaint ID — no login, no form-filling, no
-database.
+An AI-powered, bilingual (English/Hindi) civic complaint platform. A citizen speaks a complaint in their own language; the app transcribes it, drafts a formal grievance, matches it against relevant government schemes, and gives the citizen a trackable Complaint ID — no login, no form-filling, no database.
 
 [![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://gramvaani-ai.streamlit.app/)
 
@@ -15,9 +11,9 @@ database.
 ## Features
 
 | Capability                     | How it works                                                                                                                                                                                                                            |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Voice-to-text**              | Citizen uploads a WAV/MP3/M4A recording; OpenAI **Whisper** transcribes it, with automatic language detection.                                                                                                                          |
-| **AI complaint drafting**      | The transcript is sent to **Groq** (`llama-3.3-70b-versatile`, falling back to `llama-3.1-8b-instant`), which returns a structured complaint: type, responsible department, priority, summary, and a formal letter body.                |
+| :----------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Voice-to-text**              | Citizen uploads a WAV/MP3/M4A recording; **Groq Cloud API** (`whisper-large-v3-turbo`) transcribes it with automatic language detection.                                                                                                |
+| **AI complaint drafting**      | The transcript is sent to **Groq** (`openai/gpt-oss-120b`, falling back to `openai/gpt-oss-20b`), which returns a structured complaint: type, responsible department, priority, summary, and a formal letter body.                      |
 | **Evidence photos**            | Citizen can attach a JPG/PNG photo (e.g. a pothole) alongside the voice complaint. Saved locally, previewed, size/type validated.                                                                                                       |
 | **Government scheme matching** | The complaint is matched offline, via keyword rules, against a local knowledge base of 25 Indian government schemes across 8 categories (Sanitation, Water Supply, Roads, Electricity, Sewage, Street Lights, Public Health, Drainage). |
 | **Complaint ID & PDF export**  | Every complaint gets a unique ID (`GV-YYYYMMDD-NNNNN`) and can be downloaded as a formatted PDF.                                                                                                                                        |
@@ -25,26 +21,23 @@ database.
 | **Settings**                   | Application language, preferred complaint language, auto-delete for uploaded files, and Clear Session / Restore Defaults.                                                                                                               |
 | **Bilingual interface**        | The full interface, not just complaint content, is available in English and Hindi and switches instantly from Settings.                                                                                                                 |
 
-Image classification (`ai/vision`) and speech translation (`ai/translation`)
-are scoped but not yet implemented.
+Image classification (`ai/vision`) and speech translation (`ai/translation`) are scoped but not yet implemented.
 
-There is no database and no user accounts. Every complaint, scheme match,
-and tracking record lives in `st.session_state` for the length of the
-browser session.
+There is no database and no user accounts. Every complaint, scheme match, and tracking record lives in `st.session_state` for the length of the browser session.
 
 ---
 
-## Tech stack
+## Tech Stack
 
-| Layer                | Technology                                                                  |
-| -------------------- | --------------------------------------------------------------------------- |
-| UI framework         | [Streamlit](https://streamlit.io)                                           |
-| Speech-to-text       | [OpenAI Whisper](https://github.com/openai/whisper) (local inference)       |
-| Complaint generation | [Groq](https://groq.com) API (Llama 3.3 / 3.1)                              |
-| PDF generation       | [ReportLab](https://www.reportlab.com/)                                     |
-| Scheme matching      | Local, offline keyword-rule engine                                          |
-| State                | `st.session_state` only — no database                                       |
-| Config               | `.env` (Groq key, model selection) + `.streamlit/config.toml` (fixed theme) |
+| Layer                    | Technology                                                                        |
+| :----------------------- | :-------------------------------------------------------------------------------- |
+| **UI framework**         | [Streamlit](https://streamlit.io)                                                 |
+| **Speech-to-text**       | [Groq Cloud API](https://groq.com) (`whisper-large-v3-turbo`)                     |
+| **Complaint generation** | [Groq Cloud API](https://groq.com) (`openai/gpt-oss-120b` / `openai/gpt-oss-20b`) |
+| **PDF generation**       | [ReportLab](https://www.reportlab.com/)                                           |
+| **Scheme matching**      | Local, offline keyword-rule engine                                                |
+| **State**                | `st.session_state` only — no database                                             |
+| **Config**               | `.env` (Groq API keys, model selection) + `.streamlit/config.toml` (fixed theme)  |
 
 ---
 
@@ -85,9 +78,6 @@ GramVaani_AI/
 └── .streamlit/config.toml           # Pinned light theme (brand colors)
 ```
 
-Pages never call Groq or Whisper directly — they call into `ai/`, which has
-no knowledge that Streamlit exists.
-
 ---
 
 ## Architecture
@@ -109,10 +99,6 @@ ai/schemes                  →  matched government schemes
 st.session_state            →  read back by whichever page the citizen
                                 navigates to next
 ```
-
-The frontend (`frontend/pages`, `components`, `utils/i18n.py`) only handles
-UI, routing, and translation. All business logic lives in `ai/`, and `ai/`
-has no dependency on Streamlit.
 
 ---
 
