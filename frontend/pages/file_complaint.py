@@ -334,6 +334,15 @@ def _render_complaint_result_if_available() -> None:
         """,
         unsafe_allow_html=True,
     )
+      # A one-click copy button for the Complaint ID, so a citizen can
+    # paste it straight into the Track Complaint page without having
+    # to manually select the text out of the card above. st.code()
+    # is used deliberately here (rather than a custom HTML/JS button)
+    # because Streamlit renders a built-in copy-to-clipboard icon on
+    # every code block automatically - no clipboard-permission or
+    # sandboxed-iframe issues that a hand-rolled JS button can hit.
+    st.caption(t("file_complaint.complaint_id_copy_caption"))
+    st.code(str(complaint.get("complaint_id", "")), language=None)
 
 
 def _handle_pdf_downloaded() -> None:

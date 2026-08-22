@@ -779,5 +779,9 @@ TRANSLATIONS: dict = {
             "पर पुनर्स्थापित करता है।"
         ),
         "settings.restore_defaults_success_message": "प्राथमिकताएं डिफ़ॉल्ट पर पुनर्स्थापित की गईं।",
+        
+        "file_complaint.complaint_id_copy_caption": "Copy your Complaint ID to track it later:"
+        # Hindi: "बाद में ट्रैक करने के लिए अपनी शिकायत आईडी कॉपी करें:"        
     },
+    
 }
