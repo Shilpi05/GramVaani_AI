@@ -113,10 +113,9 @@ GROQ_RETRY_ATTEMPTS: int = int(_env_or_default("GROQ_RETRY_ATTEMPTS", "3"))
 
 # Primary and fallback model names. Both are hardcoded defaults per
 # project requirements, but may be overridden via .env.
-GROQ_PRIMARY_MODEL: str = _env_or_default("GROQ_MODEL", "llama-3.3-70b-versatile")
-GROQ_FALLBACK_MODEL: str = _env_or_default(
-    "GROQ_FALLBACK_MODEL", "llama-3.1-8b-instant"
-)
+# Change the fallback defaults to the working model
+GROQ_PRIMARY_MODEL: str = _env_or_default("GROQ_MODEL", "openai/gpt-oss-120b")
+GROQ_FALLBACK_MODEL: str = _env_or_default("GROQ_FALLBACK_MODEL", "openai/gpt-oss-20b")
 
 
 class ComplaintGenerationError(Exception):
